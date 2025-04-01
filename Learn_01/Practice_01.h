@@ -6,15 +6,20 @@
 
 GLFWwindow* window;
 
-float vertices[] = {
+float vertices_01[] = {
     0.8f, 0.0f, 0.0f,
     0.4f, 0.5f, 0.0f,
+    0.0f, 0.0f, 0.0f,
+};
+
+float vertices_02[] = {
     0.0f, 0.0f, 0.0f,
     -0.4f, -0.5f, 0.0f,
     -0.8f, 0.0f, 0.0f
 };
 
-unsigned int vbo, vao;
+unsigned int vbo[2];
+unsigned int vao[2];
 
 const char *vertexShaderSource =
         "#version 330 core\n"

@@ -33,21 +33,31 @@ int main(int argc, char* argv[])
     }
     
     // 顶点数组对象
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    glGenVertexArrays(2, vao);
+    
     
     // 顶点缓冲对象
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
+    glGenBuffers(2, vbo);
+    // 第一个VBO录入第一个三角形的顶点数据
+    glBindVertexArray(vao[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_01), vertices_01, GL_STATIC_DRAW);
     // 设置顶点属性指针
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), static_cast<void*>(nullptr));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
-
-    // 解绑 VBO 和 VAO
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);// 解绑VBO
+    glBindVertexArray(0);// 解绑VAO_01
+    
+    // 第二个VBO录入第二个三角形的顶点数据
+    glBindVertexArray(vao[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_02), vertices_02, GL_STATIC_DRAW);
+    // 设置顶点属性指针
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);// 解绑VBO
+    glBindVertexArray(0);// 解绑VAO_02
+    
 
     // 顶点着色器
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -102,17 +112,18 @@ int main(int argc, char* argv[])
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         
         glUseProgram(shaderProgram);
-        glBindVertexArray(vao);
+        glBindVertexArray(vao[0]);
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        glDrawArrays(GL_TRIANGLES, 2, 3);
+        glBindVertexArray(vao[1]);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
     
     // 释放资源
-    glDeleteBuffers(1, &vao);
-    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, vao);
+    glDeleteBuffers(1, vbo);
     glDeleteProgram(shaderProgram);
 
     glfwTerminate();
