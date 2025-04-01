@@ -29,7 +29,7 @@ const char *vertexShaderSource =
         "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
         "}\0";
 
-const char *fragmentShaderSource =
+const char *fragmentShaderSource_01 =
         "#version 330 core\n"
         "out vec4 FragColor;\n"
         "void main()\n"
@@ -37,12 +37,22 @@ const char *fragmentShaderSource =
         "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
         "}\0";
 
+const char *fragmentShaderSource_02 =
+        "#version 330 core\n"
+        "out vec4 FragColor;\n"
+        "void main()\n"
+        "{\n"
+        "   FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
+        "}\0";
+
 // Vertex Shader
 unsigned int vertexShader;
 // Fragment Shader
-unsigned int fragmentShader;
+unsigned int fragmentShader_01;
+unsigned int fragmentShader_02;
 // Shader Program
-unsigned int shaderProgram;
+unsigned int shaderProgram_01;
+unsigned int shaderProgram_02;
 
 int  success;
 char infoLog[512];
