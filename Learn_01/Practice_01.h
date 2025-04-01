@@ -21,30 +21,6 @@ float vertices_02[] = {
 unsigned int vbo[2];
 unsigned int vao[2];
 
-const char *vertexShaderSource =
-        "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "void main()\n"
-        "{\n"
-        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}\0";
-
-const char *fragmentShaderSource_01 =
-        "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-        "}\0";
-
-const char *fragmentShaderSource_02 =
-        "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "   FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
-        "}\0";
-
 // Vertex Shader
 unsigned int vertexShader;
 // Fragment Shader

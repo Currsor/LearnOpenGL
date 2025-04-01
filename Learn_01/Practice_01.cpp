@@ -1,5 +1,7 @@
 #include "Practice_01.h"
 
+#include "Shader/Shader.h"
+
 int main(int argc, char* argv[])
 {
     // 初始化GLFW
@@ -58,70 +60,8 @@ int main(int argc, char* argv[])
     glBindBuffer(GL_ARRAY_BUFFER, 0);// 解绑VBO
     glBindVertexArray(0);// 解绑VAO_02
     
-
-    // 顶点着色器
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
-    glCompileShader(vertexShader);
-
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    // 片段着色器_01
-    fragmentShader_01 = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader_01, 1, &fragmentShaderSource_01, nullptr);
-    glCompileShader(fragmentShader_01);
-
-    glGetShaderiv(fragmentShader_01, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(fragmentShader_01, 512, nullptr, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT_01::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    // 片段着色器_02
-    fragmentShader_02 = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader_02, 1, &fragmentShaderSource_02, nullptr);
-    glCompileShader(fragmentShader_02);
-
-    glGetShaderiv(fragmentShader_02, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(fragmentShader_02, 512, nullptr, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT_02::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    // 链接着色器程序_01
-    shaderProgram_01 = glCreateProgram();
-    glAttachShader(shaderProgram_01, vertexShader);
-    glAttachShader(shaderProgram_01, fragmentShader_01);
-    glLinkProgram(shaderProgram_01);
-
-    glGetProgramiv(shaderProgram_01, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram_01, 512, nullptr, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM_01::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    // 链接着色器程序_02
-    shaderProgram_02 = glCreateProgram();
-    glAttachShader(shaderProgram_02, vertexShader);
-    glAttachShader(shaderProgram_02, fragmentShader_02);
-    glLinkProgram(shaderProgram_02);
-
-    glGetProgramiv(shaderProgram_02, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram_02, 512, nullptr, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM_02::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader_01);
-    glDeleteShader(fragmentShader_02);
+    Shader Shader_01("Shader/VShader.glsl", "Shader/FShader_01.glsl");
+    Shader Shader_02("Shader/VShader.glsl", "Shader/FShader_02.glsl");
 
     // 渲染循环
     while (!glfwWindowShouldClose(window))
@@ -134,13 +74,18 @@ int main(int argc, char* argv[])
         glClear(GL_COLOR_BUFFER_BIT);
     
         // 绘制
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        // 更新uniform颜色
+        float timeValue = glfwGetTime();
         
-        glUseProgram(shaderProgram_01);
+        Shader_01.use();
+        Shader_01.setFloat("offset", timeValue);
         glBindVertexArray(vao[0]);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        glUseProgram(shaderProgram_02);
+        Shader_02.use();
+        Shader_02.setFloat("offset", -0.2f);
         glBindVertexArray(vao[1]);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
