@@ -6,41 +6,39 @@
 
 GLFWwindow* window;
 
-float vertices_01[] = {
-    0.8f, 0.0f, 0.0f,
-    0.4f, 0.5f, 0.0f,
-    0.0f, 0.0f, 0.0f,
+float vertices[] = {
+    //     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
+    0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
+    0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+   -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
+   -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left 
 };
 
-float vertices_02[] = {
-    0.0f, 0.0f, 0.0f,
-    -0.4f, -0.5f, 0.0f,
-    -0.8f, 0.0f, 0.0f
+unsigned int indices[] = {
+    0, 1, 3, // first triangle
+    1, 2, 3  // second triangle
 };
 
-unsigned int vbo[2];
-unsigned int vao[2];
+unsigned int vao, vbo, ebo;
+
+float mixValue = 0.2f;
+
 
 // Vertex Shader
 unsigned int vertexShader;
 // Fragment Shader
 unsigned int fragmentShader_01;
-unsigned int fragmentShader_02;
 // Shader Program
 unsigned int shaderProgram_01;
-unsigned int shaderProgram_02;
 
-int  success;
-char infoLog[512];
+// 加载图片
+int width, height, nrChannels;
+unsigned int texture1, texture2;
 
 inline void framebufferSizeCallback(GLFWwindow* window, int width, int height)  // NOLINT(clang-diagnostic-shadow)
 {
     return glViewport(0, 0, width, height);
 }
 
-inline void process_input(GLFWwindow *window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-}
+inline void process_input(GLFWwindow *window);
 

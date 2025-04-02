@@ -1,6 +1,7 @@
 #include "Practice_01.h"
 
 #include "Shader/Shader.h"
+#include "stb_image.h"
 
 int main(int argc, char* argv[])
 {
@@ -15,7 +16,7 @@ int main(int argc, char* argv[])
 #endif
 
     // 创建窗口对象
-    window = glfwCreateWindow(1000, 600, "Practice", nullptr, nullptr);
+    window = glfwCreateWindow(800, 600, "Practice", nullptr, nullptr);
 
     if (window == nullptr)
     {
@@ -34,35 +35,97 @@ int main(int argc, char* argv[])
         return -1;
     }
     
-    // 顶点数组对象
-    glGenVertexArrays(2, vao);
+
     
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+    glGenBuffers(1, &ebo);
+
+    glBindVertexArray(vao);
     
-    // 顶点缓冲对象
-    glGenBuffers(2, vbo);
-    // 第一个VBO录入第一个三角形的顶点数据
-    glBindVertexArray(vao[0]);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_01), vertices_01, GL_STATIC_DRAW);
-    // 设置顶点属性指针
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // 位置属性
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    // 颜色属性
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // 纹理属性
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+    
     glBindBuffer(GL_ARRAY_BUFFER, 0);// 解绑VBO
     glBindVertexArray(0);// 解绑VAO_01
-    
-    // 第二个VBO录入第二个三角形的顶点数据
-    glBindVertexArray(vao[1]);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_02), vertices_02, GL_STATIC_DRAW);
-    // 设置顶点属性指针
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);// 解绑VBO
-    glBindVertexArray(0);// 解绑VAO_02
+
+
     
     Shader Shader_01("Shader/VShader.glsl", "Shader/FShader_01.glsl");
-    Shader Shader_02("Shader/VShader.glsl", "Shader/FShader_02.glsl");
 
+    
+
+    // texture 1
+    // ---------
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1); 
+     // 设置纹理环绕参数
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	// 将纹理换行设置为GL_REPEAT（默认换行方法）
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    // 设置纹理过滤参数
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // 加载图像，创建纹理和生成贴图
+    stbi_set_flip_vertically_on_load(true); // 告诉stb_image.h在y轴上翻转加载的纹理。
+    unsigned char *data = stbi_load("Assets/container.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+    
+    // texture 2
+    // ---------
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // load image, create texture and generate mipmaps
+    data = stbi_load("Assets/awesomeface.png", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+
+
+    // 告诉opengl每个采样器属于哪个纹理单元(只需要做一次)
+    // -------------------------------------------------------------------------------------------
+    Shader_01.use(); // 千万不要忘记在设置 shader program 的 uniform 变量之前，先使用（或者说激活）这个 shader program
+    // 手动设置，如下所示：
+    glUniform1i(glGetUniformLocation(Shader_01.ID, "texture1"), 0);
+    // 或者通过纹理类设置它
+    Shader_01.setInt("texture2", 1);
+    
+    
     // 渲染循环
     while (!glfwWindowShouldClose(window))
     {
@@ -75,30 +138,48 @@ int main(int argc, char* argv[])
     
         // 绘制
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        // 更新uniform颜色
-        float timeValue = glfwGetTime();
         
-        Shader_01.use();
-        Shader_01.setFloat("offset", timeValue);
-        glBindVertexArray(vao[0]);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // 在相应的纹理单元上绑定纹理
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
 
-        Shader_02.use();
-        Shader_02.setFloat("offset", -0.2f);
-        glBindVertexArray(vao[1]);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        Shader_01.setFloat("mixValue", mixValue);
+
+        // render container
+        Shader_01.use();
+        glBindVertexArray(vao);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
     
     // 释放资源
-    glDeleteBuffers(1, vao);
-    glDeleteBuffers(1, vbo);
+    glDeleteBuffers(1, &vao);
+    glDeleteBuffers(1, &vbo);
     glDeleteProgram(shaderProgram_01);
-    glDeleteProgram(shaderProgram_02);
 
     glfwTerminate();
     return 0;
+}
+
+void process_input(GLFWwindow* window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    {
+        mixValue += 0.001f; // change this value accordingly (might be too slow or too fast based on system hardware)
+        if(mixValue >= 1.0f)
+            mixValue = 1.0f;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    {
+        mixValue -= 0.001f; // change this value accordingly (might be too slow or too fast based on system hardware)
+        if (mixValue <= 0.0f)
+            mixValue = 0.0f;
+    }
 }

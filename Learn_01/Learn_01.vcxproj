@@ -160,14 +160,17 @@
     <ClCompile Include="glad.c" />
     <ClCompile Include="Practice_01.cpp" />
     <ClCompile Include="Shader\Shader.cpp" />
+    <ClCompile Include="stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Practice_01.h" />
     <ClInclude Include="Shader\Shader.h" />
+    <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\awesomeface.png" />
+    <Content Include="Assets\container.jpg" />
     <Content Include="Shader\FShader_01.glsl" />
-    <Content Include="Shader\FShader_02.glsl" />
     <Content Include="Shader\VShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
