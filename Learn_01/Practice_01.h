@@ -4,6 +4,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 GLFWwindow* window;
 
 float vertices[] = {
@@ -23,13 +27,9 @@ unsigned int vao, vbo, ebo;
 
 float mixValue = 0.2f;
 
+glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+glm::mat4 trans = glm::mat4(1.0f);
 
-// Vertex Shader
-unsigned int vertexShader;
-// Fragment Shader
-unsigned int fragmentShader_01;
-// Shader Program
-unsigned int shaderProgram_01;
 
 // 加载图片
 int width, height, nrChannels;

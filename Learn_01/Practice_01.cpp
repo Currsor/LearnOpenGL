@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
     glEnableVertexAttribArray(2);
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);// 解绑VBO
-    glBindVertexArray(0);// 解绑VAO_01
+    glBindVertexArray(0);// 解绑VAO
 
 
     
@@ -96,17 +96,17 @@ int main(int argc, char* argv[])
     // ---------
     glGenTextures(1, &texture2);
     glBindTexture(GL_TEXTURE_2D, texture2);
-    // set the texture wrapping parameters
+    // 设置纹理环绕参数
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters
+    // 设置纹理过滤参数
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    // load image, create texture and generate mipmaps
+    // 加载图像，创建纹理和生成贴图
     data = stbi_load("Assets/awesomeface.png", &width, &height, &nrChannels, 0);
     if (data)
     {
-        // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
+        // awesomeface.png具有透明度，因此有一个alpha通道，所以一定要告诉OpenGL数据类型是GL_RGBA
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
     glUniform1i(glGetUniformLocation(Shader_01.ID, "texture1"), 0);
     // 或者通过纹理类设置它
     Shader_01.setInt("texture2", 1);
-    
+
     
     // 渲染循环
     while (!glfwWindowShouldClose(window))
@@ -147,19 +147,31 @@ int main(int argc, char* argv[])
 
         Shader_01.setFloat("mixValue", mixValue);
 
+        trans = glm::mat4(1.0f);
+        trans = translate(trans, glm::vec3(0.0f, sin(static_cast<float>(glfwGetTime())), 0.0f));
+        trans = rotate(trans, sin(static_cast<float>(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        unsigned int transformLoc = glGetUniformLocation(Shader_01.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+
         // render container
         Shader_01.use();
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
+        trans = glm::mat4(1.0f);
+        trans = scale(trans, glm::vec3(sin(static_cast<float>(glfwGetTime())), sin(static_cast<float>(glfwGetTime())), sin(static_cast<float>(glfwGetTime()))));
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-    
+
     // 释放资源
     glDeleteBuffers(1, &vao);
     glDeleteBuffers(1, &vbo);
-    glDeleteProgram(shaderProgram_01);
+    glDeleteBuffers(1, &ebo);
 
     glfwTerminate();
     return 0;
@@ -172,14 +184,24 @@ void process_input(GLFWwindow* window)
 
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
     {
-        mixValue += 0.001f; // change this value accordingly (might be too slow or too fast based on system hardware)
-        if(mixValue >= 1.0f)
+        if (mixValue < 1.0f)
+        {
+            mixValue += 0.001f;
+        }
+        else
+        {
             mixValue = 1.0f;
+        }
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
     {
-        mixValue -= 0.001f; // change this value accordingly (might be too slow or too fast based on system hardware)
-        if (mixValue <= 0.0f)
-            mixValue = 0.0f;
+        if (mixValue > 0.0f)
+        {
+            mixValue -= 0.001f;
+        }
+        else
+        {
+            mixValue = 1.0f;
+        }
     }
 }
