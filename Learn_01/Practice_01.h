@@ -10,6 +10,9 @@
 
 GLFWwindow* window;
 
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+
 float vertices[] = {
     //     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
@@ -29,6 +32,10 @@ float mixValue = 0.2f;
 
 glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
 glm::mat4 trans = glm::mat4(1.0f);
+
+glm::mat4 model = glm::mat4(1.0f);
+glm::mat4 view = glm::mat4(1.0f);
+glm::mat4 projection = glm::mat4(1.0f);
 
 
 // 加载图片

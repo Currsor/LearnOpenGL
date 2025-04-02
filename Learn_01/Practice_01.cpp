@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
 #endif
 
     // 创建窗口对象
-    window = glfwCreateWindow(800, 600, "Practice", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", nullptr, nullptr);
 
     if (window == nullptr)
     {
@@ -121,10 +121,27 @@ int main(int argc, char* argv[])
     // -------------------------------------------------------------------------------------------
     Shader_01.use(); // 千万不要忘记在设置 shader program 的 uniform 变量之前，先使用（或者说激活）这个 shader program
     // 手动设置，如下所示：
-    glUniform1i(glGetUniformLocation(Shader_01.ID, "texture1"), 0);
-    // 或者通过纹理类设置它
+    Shader_01.setInt("texture1", 0);
     Shader_01.setInt("texture2", 1);
 
+
+    // 模型矩阵、观察矩阵和投影矩阵
+    model = rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+    view = translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+    projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT),
+                                  0.1f, 100.0f);
+
+    // 检索矩阵均匀位置
+    unsigned int modelLoc = glGetUniformLocation(Shader_01.ID, "model");
+    unsigned int viewLoc  = glGetUniformLocation(Shader_01.ID, "view");
+    // 将它们传递给着色器（3种不同的方式）
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+
+    Shader_01.setMat4("projection", projection);
+    
     
     // 渲染循环
     while (!glfwWindowShouldClose(window))
@@ -147,21 +164,11 @@ int main(int argc, char* argv[])
 
         Shader_01.setFloat("mixValue", mixValue);
 
-        trans = glm::mat4(1.0f);
-        trans = translate(trans, glm::vec3(0.0f, sin(static_cast<float>(glfwGetTime())), 0.0f));
-        trans = rotate(trans, sin(static_cast<float>(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
-
-        unsigned int transformLoc = glGetUniformLocation(Shader_01.ID, "transform");
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        
 
         // render container
         Shader_01.use();
         glBindVertexArray(vao);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-        trans = glm::mat4(1.0f);
-        trans = scale(trans, glm::vec3(sin(static_cast<float>(glfwGetTime())), sin(static_cast<float>(glfwGetTime())), sin(static_cast<float>(glfwGetTime()))));
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
         glfwSwapBuffers(window);
