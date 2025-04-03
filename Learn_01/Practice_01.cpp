@@ -38,6 +38,8 @@ int main(int argc, char* argv[])
     // 启用Z_Buffer
     glEnable(GL_DEPTH_TEST);
 
+    // 隐藏光标，并捕捉(Capture)它。
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -141,16 +143,22 @@ int main(int argc, char* argv[])
 
         Shader_01.setFloat("mixValue", mixValue);
 
+        // 计算deltaTime
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        cameraSpeed = 2.5f * deltaTime;
+
+        
         Shader_01.use();
         
         // 创建转换
         glm::mat4 model         = glm::mat4(1.0f); // 确保首先将矩阵初始化为单位矩阵
         glm::mat4 view          = glm::mat4(1.0f);
         glm::mat4 projection    = glm::mat4(1.0f);
-
-        // 变换
-        view  = translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-        projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
+        
+        view = lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        projection = glm::perspective(glm::radians(fov), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
         
         // 检索矩阵均匀位置
         unsigned int modelLoc = glGetUniformLocation(Shader_01.ID, "model");
@@ -191,9 +199,11 @@ int main(int argc, char* argv[])
 
 void process_input(GLFWwindow* inWindow)
 {
+    // ESC key to exit
     if (glfwGetKey(inWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(inWindow, true);
 
+    // Adjust texture transparency
     if (glfwGetKey(inWindow, GLFW_KEY_UP) == GLFW_PRESS)
     {
         if (mixValue < 1.0f)
@@ -216,4 +226,101 @@ void process_input(GLFWwindow* inWindow)
             mixValue = 0.0f;
         }
     }
+
+    // Camera movement
+    if (glfwGetKey(inWindow, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos += cameraSpeed * cameraFront;
+    if (glfwGetKey(inWindow, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * cameraFront;
+    if (glfwGetKey(inWindow, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    if (glfwGetKey(inWindow, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+
+    // FOV
+    if (glfwGetMouseButton(inWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    {
+        glfwSetInputMode(inWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetCursorPos(inWindow, lastX, lastY);
+        glfwSetCursorPosCallback(inWindow, mouse_callback);
+
+        if (glfwGetKey(inWindow, GLFW_KEY_Z) == GLFW_PRESS)
+        {
+            if (fov < 170.0f)
+            {
+                fov += 0.5f;
+                
+            }
+            else
+            {
+                fov = 170.0f;
+            }
+        }
+
+        if (glfwGetKey(inWindow, GLFW_KEY_C) == GLFW_PRESS)
+        {
+            if (fov > 5.0f)
+            {
+                fov -= 0.5f;
+            }
+            else
+            {
+                fov = 5.0f;
+            }
+        }
+    }
+    else if (glfwGetMouseButton(inWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE)
+    {
+        glfwSetCursorPosCallback(inWindow, nullptr);
+        glfwSetInputMode(inWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        if (fov != 90.0f)
+        {
+            if (fov > 90.0f)
+            {
+                fov -= 1.0f;
+            }
+            else if (fov < 90.0f)
+            {
+                fov += 1.0f;
+            }
+            if (fabs(fov - 90.0f) < 1.0f)
+            {
+                fov = 90.0f;
+            }
+        }
+    }
 }
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if(firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; 
+    lastX = xpos;
+    lastY = ypos;
+    
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    yaw   += xoffset;
+    pitch += yoffset;
+
+    if(pitch > 89.0f)
+        pitch = 89.0f;
+    if(pitch < -89.0f)
+        pitch = -89.0f;
+
+    glm::vec3 front;
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(front);
+}
+ 

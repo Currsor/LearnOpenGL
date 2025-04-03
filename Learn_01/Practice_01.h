@@ -10,8 +10,8 @@
 
 GLFWwindow* window;
 
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
 
 float vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -74,6 +74,26 @@ unsigned int vao, vbo;
 
 float mixValue = 0.2f;
 
+float deltaTime = 0.0f; // 当前帧与上一帧的时间差
+float lastFrame = 0.0f; // 上一帧的时间
+
+float cameraSpeed;
+
+bool firstMouse = true;
+
+float yaw = -90.0f, pitch;
+
+float lastX = SCR_WIDTH / 2, lastY = SCR_HEIGHT / 2;
+
+float sensitivity = 0.05;
+
+float fov = 90.0f;
+
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
 
 // 加载图片
 int width, height, nrChannels;
@@ -85,4 +105,6 @@ inline void framebufferSizeCallback(GLFWwindow* inWindow, int width, int height)
 }
 
 inline void process_input(GLFWwindow *inWindow);
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
