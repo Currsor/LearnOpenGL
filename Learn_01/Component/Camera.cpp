@@ -1,86 +1,140 @@
 #include "Camera.h"
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : 
-    Front(glm::vec3(0.0f, 0.0f, -1.0f)),
-    MovementSpeed(2.5f),
-    MouseSensitivity(0.1f),
-    Zoom(45.0f)
-{
+#include <GLFW/glfw3.h>
+#include <glm/gtc/quaternion.hpp>
+
+// 构造函数(向量)
+Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch, unsigned int WIDTH, unsigned int HEIGHT) 
+    : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), 
+      MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
     Position = position;
     WorldUp = up;
     Yaw = yaw;
     Pitch = pitch;
-    UpdateCameraVectors();
+    lastX = WIDTH;
+    lastY = HEIGHT;
+    updateCameraVectors();
 }
 
+// 获取视图矩阵
 glm::mat4 Camera::GetViewMatrix() const
 {
-    return glm::lookAt(Position, Position + Front, Up);
+    return lookAt(Position, Position + Front, Up);
 }
 
-void Camera::ProcessKeyboard(MovementDirection direction, float deltaTime)
-{
+// 处理键盘输入
+void Camera::ProcessKeyboard(GLFWwindow* inWindow, float deltaTime) {
     float velocity = MovementSpeed * deltaTime;
-    switch (direction)
-    {
-    case FORWARD:
+    if (glfwGetKey(inWindow, GLFW_KEY_W) == GLFW_PRESS)
         Position += Front * velocity;
-        break;
-    case BACKWARD:
+    if (glfwGetKey(inWindow, GLFW_KEY_S) == GLFW_PRESS)
         Position -= Front * velocity;
-        break;
-    case LEFT:
+    if (glfwGetKey(inWindow, GLFW_KEY_A) == GLFW_PRESS)
         Position -= Right * velocity;
-        break;
-    case RIGHT:
+    if (glfwGetKey(inWindow, GLFW_KEY_D) == GLFW_PRESS)
         Position += Right * velocity;
-        break;
-    }
 }
 
-void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch)
+// 处理鼠标移动
+void Camera::ProcessMouseMovement(GLFWwindow* inWindow)
 {
-    xoffset *= MouseSensitivity;
-    yoffset *= MouseSensitivity;
-
-    Yaw += xoffset;
-    Pitch += yoffset;
-
-    if (constrainPitch)
+    if (glfwGetMouseButton(inWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
     {
-        if (Pitch > 89.0f)
-            Pitch = 89.0f;
-        if (Pitch < -89.0f)
-            Pitch = -89.0f;
+        glfwSetInputMode(inWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetCursorPos(inWindow, lastX, lastY);
+        glfwSetCursorPosCallback(inWindow, [](GLFWwindow* window, double xpos, double ypos) {
+            Camera* cam = static_cast<Camera*>(glfwGetWindowUserPointer(window));
+            if (cam->firstMouse) {
+                cam->lastX = xpos;
+                cam->lastY = ypos;
+                cam->firstMouse = false;
+            }
+            float xoffset = xpos - cam->lastX;
+            float yoffset = cam->lastY - ypos;
+            cam->lastX = xpos;
+            cam->lastY = ypos;
+            xoffset *= cam->MouseSensitivity;
+            yoffset *= cam->MouseSensitivity;
+
+            cam->Yaw += xoffset;
+            cam->Pitch += yoffset;
+
+            // 限制俯仰角
+            if (cam->Pitch > 89.0f) cam->Pitch = 89.0f;
+            if (cam->Pitch < -89.0f) cam->Pitch = -89.0f;
+
+            cam->updateCameraVectors();
+        });
     }
-
-    UpdateCameraVectors();
+    else
+    {
+        glfwSetCursorPosCallback(inWindow, nullptr);
+        glfwSetInputMode(inWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+    
+    
 }
 
-void Camera::ProcessMouseScroll(float yoffset)
-{
-    Zoom -= yoffset;
-    if (Zoom < 1.0f)
-        Zoom = 1.0f;
-    if (Zoom > 90.0f)
-        Zoom = 90.0f;
-}
-
-glm::mat4 Camera::GetProjectionMatrix(float aspectRatio) const
-{
-    return glm::perspective(glm::radians(Zoom), aspectRatio, 0.1f, 100.0f);
-}
-
-void Camera::UpdateCameraVectors()
-{
-    // 计算新的前向向量
+// 更新相机向量
+void Camera::updateCameraVectors() {
+    // 计算新的Front向量
     glm::vec3 front;
     front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
     front.y = sin(glm::radians(Pitch));
     front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    Front = glm::normalize(front);
+    Front = normalize(front);
     
-    // 重新计算右向量和上向量
-    Right = glm::normalize(glm::cross(Front, WorldUp));
-    Up    = glm::normalize(glm::cross(Right, Front));
+    // 重新计算Right和Up向量
+    Right = normalize(cross(Front, WorldUp));
+    Up = normalize(cross(Right, Front));
+}
+
+void Camera::updateFOV(GLFWwindow* inWindow)
+{
+    if (glfwGetMouseButton(inWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    {
+        // FOV
+        if (glfwGetKey(inWindow, GLFW_KEY_Z) == GLFW_PRESS)
+        {
+            if (Zoom < 170.0f)
+            {
+                Zoom += 0.5f;
+                
+            }
+            else
+            {
+                Zoom = 170.0f;
+            }
+        }
+
+        if (glfwGetKey(inWindow, GLFW_KEY_C) == GLFW_PRESS)
+        {
+            if (Zoom > 5.0f)
+            {
+                Zoom -= 0.5f;
+            }
+            else
+            {
+                Zoom = 5.0f;
+            }
+        }
+    }
+    else if (glfwGetMouseButton(inWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE)
+    {
+        if (Zoom != ZOOM)
+        {
+            if (Zoom > ZOOM)
+            {
+                Zoom -= 1.0f;
+            }
+            else if (Zoom < ZOOM)
+            {
+                Zoom += 1.0f;
+            }
+            if (fabs(Zoom - ZOOM) < 1.0f)
+            {
+                Zoom = ZOOM;
+            }
+        }
+    }
 }

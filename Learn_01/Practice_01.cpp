@@ -18,6 +18,9 @@ int main(int argc, char* argv[])
     // 创建窗口对象
     GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", nullptr, nullptr);
 
+    Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    glfwSetWindowUserPointer(window, &camera);
+
     if (window == nullptr)
     {
         std::cout << "创建窗口对象失败!" << std::endl;
@@ -126,6 +129,9 @@ int main(int argc, char* argv[])
     {
         // 输入
         process_input(window);
+        camera.ProcessKeyboard(window, deltaTime);
+        camera.ProcessMouseMovement(window);
+        camera.updateFOV(window);
 
         // 清除颜色缓冲
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -147,7 +153,6 @@ int main(int argc, char* argv[])
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        cameraSpeed = 2.5f * deltaTime;
 
         
         Shader_01.use();
@@ -157,8 +162,8 @@ int main(int argc, char* argv[])
         glm::mat4 view          = glm::mat4(1.0f);
         glm::mat4 projection    = glm::mat4(1.0f);
         
-        view = lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        projection = glm::perspective(glm::radians(fov), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
+        view = camera.GetViewMatrix();
+        projection = glm::perspective(glm::radians(camera.Zoom), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
         
         // 检索矩阵均匀位置
         unsigned int modelLoc = glGetUniformLocation(Shader_01.ID, "model");
@@ -226,101 +231,5 @@ void process_input(GLFWwindow* inWindow)
             mixValue = 0.0f;
         }
     }
-
-    // Camera movement
-    if (glfwGetKey(inWindow, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * cameraFront;
-    if (glfwGetKey(inWindow, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraFront;
-    if (glfwGetKey(inWindow, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    if (glfwGetKey(inWindow, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-
-    // FOV
-    if (glfwGetMouseButton(inWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-    {
-        glfwSetInputMode(inWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        glfwSetCursorPos(inWindow, lastX, lastY);
-        glfwSetCursorPosCallback(inWindow, mouse_callback);
-
-        if (glfwGetKey(inWindow, GLFW_KEY_Z) == GLFW_PRESS)
-        {
-            if (fov < 170.0f)
-            {
-                fov += 0.5f;
-                
-            }
-            else
-            {
-                fov = 170.0f;
-            }
-        }
-
-        if (glfwGetKey(inWindow, GLFW_KEY_C) == GLFW_PRESS)
-        {
-            if (fov > 5.0f)
-            {
-                fov -= 0.5f;
-            }
-            else
-            {
-                fov = 5.0f;
-            }
-        }
-    }
-    else if (glfwGetMouseButton(inWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE)
-    {
-        glfwSetCursorPosCallback(inWindow, nullptr);
-        glfwSetInputMode(inWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
-        if (fov != 90.0f)
-        {
-            if (fov > 90.0f)
-            {
-                fov -= 1.0f;
-            }
-            else if (fov < 90.0f)
-            {
-                fov += 1.0f;
-            }
-            if (fabs(fov - 90.0f) < 1.0f)
-            {
-                fov = 90.0f;
-            }
-        }
-    }
-}
-
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
-{
-    if(firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; 
-    lastX = xpos;
-    lastY = ypos;
-    
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    yaw   += xoffset;
-    pitch += yoffset;
-
-    if(pitch > 89.0f)
-        pitch = 89.0f;
-    if(pitch < -89.0f)
-        pitch = -89.0f;
-
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(front);
 }
  
