@@ -34,30 +34,25 @@ int main(int argc, char* argv[])
     {
         return -1;
     }
-    
+
+    // 启用Z_Buffer
+    glEnable(GL_DEPTH_TEST);
 
     
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
-    glGenBuffers(1, &ebo);
 
     glBindVertexArray(vao);
     
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // 位置属性
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
-    // 颜色属性
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    // texture coord attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    // 纹理属性
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);// 解绑VBO
     glBindVertexArray(0);// 解绑VAO
@@ -119,28 +114,9 @@ int main(int argc, char* argv[])
 
     // 告诉opengl每个采样器属于哪个纹理单元(只需要做一次)
     // -------------------------------------------------------------------------------------------
-    Shader_01.use(); // 千万不要忘记在设置 shader program 的 uniform 变量之前，先使用（或者说激活）这个 shader program
-    // 手动设置，如下所示：
+    Shader_01.use();
     Shader_01.setInt("texture1", 0);
     Shader_01.setInt("texture2", 1);
-
-
-    // 模型矩阵、观察矩阵和投影矩阵
-    model = rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-    view = translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-
-    projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT),
-                                  0.1f, 100.0f);
-
-    // 检索矩阵均匀位置
-    unsigned int modelLoc = glGetUniformLocation(Shader_01.ID, "model");
-    unsigned int viewLoc  = glGetUniformLocation(Shader_01.ID, "view");
-    // 将它们传递给着色器（3种不同的方式）
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-
-    Shader_01.setMat4("projection", projection);
     
     
     // 渲染循环
@@ -151,7 +127,8 @@ int main(int argc, char* argv[])
 
         // 清除颜色缓冲
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
     
         // 绘制
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -164,12 +141,41 @@ int main(int argc, char* argv[])
 
         Shader_01.setFloat("mixValue", mixValue);
 
+        Shader_01.use();
         
+        // 创建转换
+        glm::mat4 model         = glm::mat4(1.0f); // 确保首先将矩阵初始化为单位矩阵
+        glm::mat4 view          = glm::mat4(1.0f);
+        glm::mat4 projection    = glm::mat4(1.0f);
+
+        // 变换
+        view  = translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
+        
+        // 检索矩阵均匀位置
+        unsigned int modelLoc = glGetUniformLocation(Shader_01.ID, "model");
+        unsigned int viewLoc  = glGetUniformLocation(Shader_01.ID, "view");
+        
+        // 将它们传递给着色器（3种不同的方式）
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+        Shader_01.setMat4("projection", projection);
 
         // render container
-        Shader_01.use();
         glBindVertexArray(vao);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(vao);
+        for(unsigned int i = 0; i < 10; i++)
+        {
+            glm::mat4 m = glm::mat4(1.0f); // 初始化为单位矩阵
+            m = translate(m, cubePositions[i]);
+            if (i % 3 == 0)
+            {
+                const float angle = 20.0f * i; 
+                m = rotate(m, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            }
+            Shader_01.setMat4("model", m);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -178,18 +184,17 @@ int main(int argc, char* argv[])
     // 释放资源
     glDeleteBuffers(1, &vao);
     glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &ebo);
 
     glfwTerminate();
     return 0;
 }
 
-void process_input(GLFWwindow* window)
+void process_input(GLFWwindow* inWindow)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(inWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(inWindow, true);
 
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    if (glfwGetKey(inWindow, GLFW_KEY_UP) == GLFW_PRESS)
     {
         if (mixValue < 1.0f)
         {
@@ -200,7 +205,7 @@ void process_input(GLFWwindow* window)
             mixValue = 1.0f;
         }
     }
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    if (glfwGetKey(inWindow, GLFW_KEY_DOWN) == GLFW_PRESS)
     {
         if (mixValue > 0.0f)
         {
@@ -208,7 +213,7 @@ void process_input(GLFWwindow* window)
         }
         else
         {
-            mixValue = 1.0f;
+            mixValue = 0.0f;
         }
     }
 }
