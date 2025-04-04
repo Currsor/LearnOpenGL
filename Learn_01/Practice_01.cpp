@@ -41,14 +41,16 @@ int main(int argc, char* argv[])
     // 启用Z_Buffer
     glEnable(GL_DEPTH_TEST);
 
-    // 隐藏光标，并捕捉(Capture)它。
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
 
+    // Shader
+    Shader Shader_01("Shader/VShader.glsl", "Shader/FShader_01.glsl");
+    Shader Shader_Light("Shader/VShader.glsl", "Shader/FShader_Light.glsl");
+
+
+    // Mesh
+    glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
-    
+    glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
@@ -58,13 +60,21 @@ int main(int argc, char* argv[])
     // texture coord attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    // Light
+    glGenVertexArrays(1, &light_vao);
+    glBindVertexArray(light_vao);
+    glGenBuffers(1, &light_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, light_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(lightVertices), lightVertices, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+    
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);// 解绑VBO
     glBindVertexArray(0);// 解绑VAO
-
-
-    
-    Shader Shader_01("Shader/VShader.glsl", "Shader/FShader_01.glsl");
 
     
 
@@ -131,6 +141,7 @@ int main(int argc, char* argv[])
         process_input(window);
         camera.ProcessKeyboard(window, deltaTime);
         camera.ProcessMouseMovement(window);
+        camera.ProcessMouseScroll(window);
         camera.updateFOV(window);
 
         // 清除颜色缓冲
@@ -138,8 +149,8 @@ int main(int argc, char* argv[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
     
-        // 绘制
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        // 绘制线框
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         
         // 在相应的纹理单元上绑定纹理
         glActiveTexture(GL_TEXTURE0);
@@ -165,17 +176,11 @@ int main(int argc, char* argv[])
         view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.Zoom), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
         
-        // 检索矩阵均匀位置
-        unsigned int modelLoc = glGetUniformLocation(Shader_01.ID, "model");
-        unsigned int viewLoc  = glGetUniformLocation(Shader_01.ID, "view");
-        
-        // 将它们传递给着色器（3种不同的方式）
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+        Shader_01.setMat4("model", model);
+        Shader_01.setMat4("view", view);
         Shader_01.setMat4("projection", projection);
 
         // render container
-        glBindVertexArray(vao);
         glBindVertexArray(vao);
         for(unsigned int i = 0; i < 10; i++)
         {
@@ -189,6 +194,19 @@ int main(int argc, char* argv[])
             Shader_01.setMat4("model", m);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+
+        Shader_Light.use();
+
+        glm::mat4 lightModel = glm::mat4(1.0f);
+        lightModel = glm::translate(lightModel, glm::vec3(1.2f, 1.0f, 2.0f));
+        lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+        
+        Shader_Light.setMat4("model", lightModel);
+        Shader_Light.setMat4("view", view);
+        Shader_Light.setMat4("projection", projection);
+
+        glBindVertexArray(light_vao);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

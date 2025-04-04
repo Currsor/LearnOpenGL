@@ -173,6 +173,7 @@
     <Content Include="Assets\awesomeface.png" />
     <Content Include="Assets\container.jpg" />
     <Content Include="Shader\FShader_01.glsl" />
+    <Content Include="Shader\FShader_Light.glsl" />
     <Content Include="Shader\VShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

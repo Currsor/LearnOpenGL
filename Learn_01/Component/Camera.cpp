@@ -33,6 +33,10 @@ void Camera::ProcessKeyboard(GLFWwindow* inWindow, float deltaTime) {
         Position -= Right * velocity;
     if (glfwGetKey(inWindow, GLFW_KEY_D) == GLFW_PRESS)
         Position += Right * velocity;
+    if (glfwGetKey(inWindow, GLFW_KEY_Q) == GLFW_PRESS)
+        Position -= Up * velocity;
+    if (glfwGetKey(inWindow, GLFW_KEY_E) == GLFW_PRESS)
+        Position += Up * velocity;
 }
 
 // 处理鼠标移动
@@ -73,6 +77,18 @@ void Camera::ProcessMouseMovement(GLFWwindow* inWindow)
     }
     
     
+}
+
+void Camera::ProcessMouseScroll(GLFWwindow* inWindow)
+{
+    glfwSetScrollCallback(inWindow, [](GLFWwindow* window, double xpos, double ypos) {
+        Camera* cam = static_cast<Camera*>(glfwGetWindowUserPointer(window));
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+        cam -> MouseSensitivity += ypos * 0.1f;
+        if (cam -> MouseSensitivity < 0.1f) cam -> MouseSensitivity = 0.1f;
+        if (cam -> MouseSensitivity > 10.0f) cam -> MouseSensitivity = 10.0f;
+    }
+    });
 }
 
 // 更新相机向量

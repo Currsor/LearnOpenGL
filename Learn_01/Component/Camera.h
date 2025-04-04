@@ -43,6 +43,9 @@ public:
 
     // 处理鼠标移动
     void ProcessMouseMovement(GLFWwindow* inWindow);
+
+    // 处理鼠标滚轮
+    void ProcessMouseScroll(GLFWwindow* inWindow);
     
     // 更新FOV
     void updateFOV(GLFWwindow* inWindow);
