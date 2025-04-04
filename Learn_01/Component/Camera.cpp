@@ -84,9 +84,9 @@ void Camera::ProcessMouseScroll(GLFWwindow* inWindow)
     glfwSetScrollCallback(inWindow, [](GLFWwindow* window, double xpos, double ypos) {
         Camera* cam = static_cast<Camera*>(glfwGetWindowUserPointer(window));
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
-        cam -> MouseSensitivity += ypos * 0.1f;
-        if (cam -> MouseSensitivity < 0.1f) cam -> MouseSensitivity = 0.1f;
-        if (cam -> MouseSensitivity > 10.0f) cam -> MouseSensitivity = 10.0f;
+        cam -> MovementSpeed += ypos * 0.5f;
+        if (cam -> MovementSpeed < 0.1f) cam -> MovementSpeed = 0.1f;
+        if (cam -> MovementSpeed > 100.0f) cam -> MovementSpeed = 100.0f;
     }
     });
 }

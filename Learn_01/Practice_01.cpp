@@ -55,11 +55,14 @@ int main(int argc, char* argv[])
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
     // texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    // normal attribute
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(5 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     // Light
     glGenVertexArrays(1, &light_vao);
@@ -176,37 +179,56 @@ int main(int argc, char* argv[])
         view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.Zoom), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
         
-        Shader_01.setMat4("model", model);
         Shader_01.setMat4("view", view);
         Shader_01.setMat4("projection", projection);
+        Shader_01.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+        Shader_01.setVec3("viewPos", camera.Position);
 
         // render container
         glBindVertexArray(vao);
         for(unsigned int i = 0; i < 10; i++)
         {
-            glm::mat4 m = glm::mat4(1.0f); // 初始化为单位矩阵
+            glm::mat4 m = glm::mat4(1.0f);
             m = translate(m, cubePositions[i]);
-            if (i % 3 == 0)
-            {
-                const float angle = 20.0f * i; 
-                m = rotate(m, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            }
+            
+            const float angle = 20.0f * i;
+            
+            m = rotate(m, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+
+            // 计算法线矩阵（只在CPU执行一次）
+            glm::mat3 normalMatrix = transpose(inverse(glm::mat3(m)));
+    
+            Shader_01.use();
             Shader_01.setMat4("model", m);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            Shader_01.setMat3("normalMatrix", normalMatrix); // 传递法线矩阵
+    
+            glDrawArrays(GL_TRIANGLES, 0, 36); // 批量绘制
         }
 
         Shader_Light.use();
-
-        glm::mat4 lightModel = glm::mat4(1.0f);
-        lightModel = glm::translate(lightModel, glm::vec3(1.2f, 1.0f, 2.0f));
-        lightModel = glm::scale(lightModel, glm::vec3(0.2f));
         
+        // 计算光源位置
+        float lightAngle = glfwGetTime(); // 使用时间作为角度
+        glm::mat4 lightRotation = glm::rotate(glm::mat4(1.0f), lightAngle, glm::vec3(0.0f, 0.0f, 1.0f));
+        glm::vec4 rotatedLightPos = lightRotation * glm::vec4(lightPos, 1.0f);
+
+        Shader_Light.setVec3("lightPos", glm::vec3(rotatedLightPos)); // 更新光源位置
+
+        lightModel = glm::mat4(1.0f);
+        lightModel = translate(lightModel, glm::vec3(rotatedLightPos));
+        lightModel = scale(lightModel, glm::vec3(0.2f));
+
         Shader_Light.setMat4("model", lightModel);
         Shader_Light.setMat4("view", view);
         Shader_Light.setMat4("projection", projection);
-
+        
         glBindVertexArray(light_vao);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        Shader_01.use();
+        Shader_01.setVec3("lightColor",  1.0f, 1.0f, 1.0f);
+        Shader_01.setVec3("lightPos", rotatedLightPos);
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
