@@ -1,7 +1,6 @@
 #include "Practice_01.h"
 
-#include "Shader/Shader.h"
-#include "stb_image.h"
+
 
 int main(int argc, char* argv[])
 {
@@ -115,10 +114,9 @@ int main(int argc, char* argv[])
     Shader_01.setInt("material.specular", 3);
     Shader_01.setFloat("material.shininess", 32.0f);// 使用标准的 2^N 值
 
-    // 光源衰减参数
-    Shader_01.setFloat("light.constant", 1.0f);
-    Shader_01.setFloat("light.linear", 0.09f);
-    Shader_01.setFloat("light.quadratic", 0.032f);
+    // 光源
+    // ---------------------------------------------------------
+
 
     // 定向光源 - 模拟太阳光（方向从右上后方照射）
     Shader_01.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
@@ -126,6 +124,26 @@ int main(int argc, char* argv[])
     Shader_01.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
     Shader_01.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
     
+    for(unsigned int i = 0; i < NR_POINT_LIGHTS; i++)
+    {
+        std::string prefix = "pointLights[" + std::to_string(i) + "].";
+    
+        Shader_01.setVec3(prefix + "position", pointLightPositions[i]);
+        
+        // 使用不同颜色
+        glm::vec3 ambient  = pointLightColors[i] * 0.1f;  // 环境光强度10%
+        glm::vec3 diffuse  = pointLightColors[i] * 0.8f;  // 漫反射强度80%
+        glm::vec3 specular = glm::vec3(1.0f);             // 镜面保持白色高光
+        
+        Shader_01.setVec3(prefix + "ambient", ambient);
+        Shader_01.setVec3(prefix + "diffuse", diffuse);
+        Shader_01.setVec3(prefix + "specular", specular);
+    
+        // 保持原有衰减参数设置
+        Shader_01.setFloat(prefix + "constant", 1.0f);
+        Shader_01.setFloat(prefix + "linear", 0.09f);
+        Shader_01.setFloat(prefix + "quadratic", 0.032f);
+    }
     
     // 渲染循环
     while (!glfwWindowShouldClose(window))
@@ -195,44 +213,23 @@ int main(int argc, char* argv[])
         }
 
         Shader_Light.use();
-        
-        // 计算光源位置
-        float lightAngle = glfwGetTime(); // 使用时间作为角度
-        glm::mat4 lightRotation = glm::rotate(glm::mat4(1.0f), lightAngle, glm::vec3(0.0f, 0.0f, 1.0f));
-        glm::vec4 rotatedLightPos = lightRotation * glm::vec4(lightPos, 1.0f);
-
-        Shader_Light.setVec3("lightPos", glm::vec3(rotatedLightPos)); // 更新光源位置
-
-        lightModel = glm::mat4(1.0f);
-        lightModel = translate(lightModel, glm::vec3(rotatedLightPos));
-        lightModel = scale(lightModel, glm::vec3(0.2f));
-
-        glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // 白色光源
-        // lightColor.x = sin(glfwGetTime() * 2.0f);
-        // lightColor.y = sin(glfwGetTime() * 0.7f);
-        // lightColor.z = sin(glfwGetTime() * 1.3f);
-
-        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // 降低影响
-        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.4f); // 很低的影响
-
-        Shader_Light.setVec3("lightColor", lightColor);
-        
-        Shader_Light.setMat4("model", lightModel);
-        Shader_Light.setMat4("view", view);
-        Shader_Light.setMat4("projection", projection);
-        
         glBindVertexArray(light_vao);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for(unsigned int i = 0; i < NR_POINT_LIGHTS; i++)
+        {
+            glm::mat4 m = glm::mat4(1.0f);
+            m = translate(m, pointLightPositions[i]);
+            m = scale(m, glm::vec3(0.2f));
+    
+            // 设置对应颜色
+            Shader_Light.setVec3("lightColor", pointLightColors[i]);
+            Shader_Light.setMat4("model", m);
+            Shader_Light.setMat4("view", view);
+            Shader_Light.setMat4("projection", projection);
+    
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
         
-
-        Shader_01.use();
-        Shader_01.setVec3("light.position", rotatedLightPos);
-
-        Shader_01.setVec3("light.ambient", ambientColor);
-        Shader_01.setVec3("light.diffuse", diffuseColor);
-        Shader_01.setVec3("light.specular", 1.0f, 1.0f, 1.0f); 
-
-
+        
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
