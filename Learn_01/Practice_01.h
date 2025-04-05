@@ -9,6 +9,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Component/Camera.h"
+#include "Component/Texture.h"
 
 GLFWwindow* window;
 
@@ -16,6 +17,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 float vertices[] = {
+    //   ---位置---       --纹理坐标--       ---法线---
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f,  0.0f, -1.0f,
      0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  0.0f,  0.0f, -1.0f,
      0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f,  0.0f, -1.0f,
@@ -128,9 +130,6 @@ float deltaTime = 0.0f; // 当前帧与上一帧的时间差
 float lastFrame = 0.0f; // 上一帧的时间
 
 
-// 加载图片
-int width, height, nrChannels;
-unsigned int texture1, texture2;
 
 inline void framebufferSizeCallback(GLFWwindow* inWindow, int width, int height)  // NOLINT(clang-diagnostic-shadow)
 {
