@@ -135,6 +135,15 @@ int main(int argc, char* argv[])
     Shader_01.use();
     Shader_01.setInt("texture1", 0);
     Shader_01.setInt("texture2", 1);
+
+    Shader_01.setVec3("material.ambient",  1.25, 1.25, 1.25);
+    Shader_01.setVec3("material.diffuse",  0.8, 0.8, 0.8);
+    Shader_01.setVec3("material.specular", 0.774597, 0.774597, 0.774597);
+    Shader_01.setFloat("material.shininess", 0.6 * 128.0f);
+
+    Shader_01.setVec3("light.ambient",  0.2f, 0.2f, 0.2f);
+    Shader_01.setVec3("light.diffuse",  0.5f, 0.5f, 0.5f);
+    Shader_01.setVec3("light.specular", 1.0f, 1.0f, 1.0f); 
     
     
     // 渲染循环
@@ -142,9 +151,9 @@ int main(int argc, char* argv[])
     {
         // 输入
         process_input(window);
+        
         camera.ProcessKeyboard(window, deltaTime);
         camera.ProcessMouseMovement(window);
-        camera.ProcessMouseScroll(window);
         camera.updateFOV(window);
 
         // 清除颜色缓冲
@@ -181,7 +190,6 @@ int main(int argc, char* argv[])
         
         Shader_01.setMat4("view", view);
         Shader_01.setMat4("projection", projection);
-        Shader_01.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
         Shader_01.setVec3("viewPos", camera.Position);
 
         // render container
@@ -218,16 +226,29 @@ int main(int argc, char* argv[])
         lightModel = translate(lightModel, glm::vec3(rotatedLightPos));
         lightModel = scale(lightModel, glm::vec3(0.2f));
 
+        glm::vec3 lightColor;
+        lightColor.x = sin(glfwGetTime() * 2.0f);
+        lightColor.y = sin(glfwGetTime() * 0.7f);
+        lightColor.z = sin(glfwGetTime() * 1.3f);
+
+        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // 降低影响
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // 很低的影响
+
+        Shader_Light.setVec3("lightColor", lightColor);
+        
         Shader_Light.setMat4("model", lightModel);
         Shader_Light.setMat4("view", view);
         Shader_Light.setMat4("projection", projection);
         
         glBindVertexArray(light_vao);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+        
 
         Shader_01.use();
-        Shader_01.setVec3("lightColor",  1.0f, 1.0f, 1.0f);
-        Shader_01.setVec3("lightPos", rotatedLightPos);
+        Shader_01.setVec3("light.position", rotatedLightPos);
+
+        Shader_01.setVec3("light.ambient", ambientColor);
+        Shader_01.setVec3("light.diffuse", diffuseColor);
 
 
         glfwSwapBuffers(window);
