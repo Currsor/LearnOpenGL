@@ -2,6 +2,7 @@
 
 
 
+
 int main(int argc, char* argv[])
 {
     // 初始化GLFW
@@ -39,6 +40,14 @@ int main(int argc, char* argv[])
 
     // 启用Z_Buffer
     glEnable(GL_DEPTH_TEST);
+
+    // 构建和编译着色器
+    // -------------------------
+    Shader ourShader("Shader/VShader.glsl", "Shader/FShader_01.glsl");
+
+    // load models
+    // -----------
+    Model ourModel("Assets/backpack/backpack.obj");
     
     // 渲染循环
     while (!glfwWindowShouldClose(window))
@@ -62,7 +71,8 @@ int main(int argc, char* argv[])
         const float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        
+
+        ourShader.use();
         
         // 创建转换
         glm::mat4 model         = glm::mat4(1.0f); // 确保首先将矩阵初始化为单位矩阵
@@ -71,6 +81,14 @@ int main(int argc, char* argv[])
         
         view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.Zoom), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
+        ourShader.setMat4("projection", projection);
+        ourShader.setMat4("view", view);
+
+        // 渲染加载的模型
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // 将其向下平移，使其位于场景的中心
+        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// 它对于我们的场景来说有点太大了，所以把它缩小
+        ourShader.setMat4("model", model);
+        ourModel.Draw(ourShader);
 
         
         glfwSwapBuffers(window);

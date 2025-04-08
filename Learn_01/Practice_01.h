@@ -9,7 +9,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Component/Camera.h"
-#include "Shader/Shader.h"
+#include "Component/Model.h"
 
 #define NR_POINT_LIGHTS 4
 
