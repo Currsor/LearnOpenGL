@@ -39,111 +39,6 @@ int main(int argc, char* argv[])
 
     // 启用Z_Buffer
     glEnable(GL_DEPTH_TEST);
-
-
-    // Shader
-    Shader Shader_01("Shader/VShader.glsl", "Shader/FShader_01.glsl");
-    Shader Shader_Light("Shader/VShader.glsl", "Shader/FShader_Light.glsl");
-
-    // 纹理
-    Texture texture1("Assets/container.jpg");
-    Texture texture2("Assets/awesomeface.png");
-    Texture diffuseMap("Assets/container2.png");
-    Texture specularMap("Assets/container2_specular.png");
-
-
-    // Mesh
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-    // texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // normal attribute
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(5 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    // Light
-    glGenVertexArrays(1, &light_vao);
-    glBindVertexArray(light_vao);
-    glGenBuffers(1, &light_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, light_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(lightVertices), lightVertices, GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-    
-    
-    glBindBuffer(GL_ARRAY_BUFFER, 0);// 解绑VBO
-    glBindVertexArray(0);// 解绑VAO
-    
-    // 纹理参数设置
-    // ---------------------------------------------------------
-    texture1.SetWrap(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    texture1.SetWrap(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    texture1.SetFilter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    texture1.SetFilter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    texture2.SetWrap(GL_TEXTURE_WRAP_S, GL_REPEAT);
-    texture2.SetWrap(GL_TEXTURE_WRAP_T, GL_REPEAT);
-    texture2.SetFilter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    texture2.SetFilter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    diffuseMap.SetWrap(GL_TEXTURE_WRAP_S, GL_REPEAT);
-    diffuseMap.SetWrap(GL_TEXTURE_WRAP_T, GL_REPEAT);
-    diffuseMap.SetFilter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    diffuseMap.SetFilter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    specularMap.SetWrap(GL_TEXTURE_WRAP_S, GL_REPEAT);
-    specularMap.SetWrap(GL_TEXTURE_WRAP_T, GL_REPEAT);
-    specularMap.SetFilter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-    
-    Shader_01.use();
-    Shader_01.setInt("texture1", 0);
-    Shader_01.setInt("texture2", 1);
-    
-    Shader_01.setInt("material.diffuse", 2);
-    Shader_01.setInt("material.specular", 3);
-    Shader_01.setFloat("material.shininess", 32.0f);// 使用标准的 2^N 值
-
-    // 光源
-    // ---------------------------------------------------------
-
-
-    // 定向光源 - 模拟太阳光（方向从右上后方照射）
-    Shader_01.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-    Shader_01.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-    Shader_01.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-    Shader_01.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-    
-    for(unsigned int i = 0; i < NR_POINT_LIGHTS; i++)
-    {
-        std::string prefix = "pointLights[" + std::to_string(i) + "].";
-    
-        Shader_01.setVec3(prefix + "position", pointLightPositions[i]);
-        
-        // 使用不同颜色
-        glm::vec3 ambient  = pointLightColors[i] * 0.1f;  // 环境光强度10%
-        glm::vec3 diffuse  = pointLightColors[i] * 0.8f;  // 漫反射强度80%
-        glm::vec3 specular = glm::vec3(1.0f);             // 镜面保持白色高光
-        
-        Shader_01.setVec3(prefix + "ambient", ambient);
-        Shader_01.setVec3(prefix + "diffuse", diffuse);
-        Shader_01.setVec3(prefix + "specular", specular);
-    
-        // 保持原有衰减参数设置
-        Shader_01.setFloat(prefix + "constant", 1.0f);
-        Shader_01.setFloat(prefix + "linear", 0.09f);
-        Shader_01.setFloat(prefix + "quadratic", 0.032f);
-    }
     
     // 渲染循环
     while (!glfwWindowShouldClose(window))
@@ -162,22 +57,12 @@ int main(int argc, char* argv[])
     
         // 绘制线框
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        
-        // 在相应的纹理单元上绑定纹理
-        texture1.Bind(GL_TEXTURE0);
-        texture2.Bind(GL_TEXTURE1);
-        diffuseMap.Bind(GL_TEXTURE2);
-        specularMap.Bind(GL_TEXTURE3);
-
-        Shader_01.setFloat("mixValue", mixValue);
 
         // 计算deltaTime
-        float currentFrame = glfwGetTime();
+        const float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-
         
-        Shader_01.use();
         
         // 创建转换
         glm::mat4 model         = glm::mat4(1.0f); // 确保首先将矩阵初始化为单位矩阵
@@ -186,57 +71,11 @@ int main(int argc, char* argv[])
         
         view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.Zoom), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
-        
-        Shader_01.setMat4("view", view);
-        Shader_01.setMat4("projection", projection);
-        Shader_01.setVec3("viewPos", camera.Position);
 
-        // render container
-        glBindVertexArray(vao);
-        for(unsigned int i = 0; i < 10; i++)
-        {
-            glm::mat4 m = glm::mat4(1.0f);
-            m = translate(m, cubePositions[i]);
-            
-            const float angle = 20.0f * i;
-            
-            m = rotate(m, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-
-            // 计算法线矩阵（只在CPU执行一次）
-            glm::mat3 normalMatrix = transpose(inverse(glm::mat3(m)));
-    
-            Shader_01.use();
-            Shader_01.setMat4("model", m);
-            Shader_01.setMat3("normalMatrix", normalMatrix); // 传递法线矩阵
-    
-            glDrawArrays(GL_TRIANGLES, 0, 36); // 批量绘制
-        }
-
-        Shader_Light.use();
-        glBindVertexArray(light_vao);
-        for(unsigned int i = 0; i < NR_POINT_LIGHTS; i++)
-        {
-            glm::mat4 m = glm::mat4(1.0f);
-            m = translate(m, pointLightPositions[i]);
-            m = scale(m, glm::vec3(0.2f));
-    
-            // 设置对应颜色
-            Shader_Light.setVec3("lightColor", pointLightColors[i]);
-            Shader_Light.setMat4("model", m);
-            Shader_Light.setMat4("view", view);
-            Shader_Light.setMat4("projection", projection);
-    
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-        
         
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    // 释放资源
-    glDeleteBuffers(1, &vao);
-    glDeleteBuffers(1, &vbo);
 
     glfwTerminate();
     return 0;
@@ -247,29 +86,5 @@ void process_input(GLFWwindow* inWindow)
     // ESC key to exit
     if (glfwGetKey(inWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(inWindow, true);
-
-    // Adjust texture transparency
-    if (glfwGetKey(inWindow, GLFW_KEY_UP) == GLFW_PRESS)
-    {
-        if (mixValue < 1.0f)
-        {
-            mixValue += 0.001f;
-        }
-        else
-        {
-            mixValue = 1.0f;
-        }
-    }
-    if (glfwGetKey(inWindow, GLFW_KEY_DOWN) == GLFW_PRESS)
-    {
-        if (mixValue > 0.0f)
-        {
-            mixValue -= 0.001f;
-        }
-        else
-        {
-            mixValue = 0.0f;
-        }
-    }
 }
  

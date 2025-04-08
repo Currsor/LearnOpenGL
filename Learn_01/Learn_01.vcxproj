@@ -115,7 +115,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);glfw3.lib;opengl32.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);glfw3.lib;assimp-vc143-mtd.lib;opengl32.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -158,7 +158,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Component\Camera.cpp" />
-    <ClCompile Include="Component\Texture.cpp" />
+    <ClCompile Include="Component\Mesh.cpp" />
+    <ClCompile Include="Component\Model.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Practice_01.cpp" />
     <ClCompile Include="Shader\Shader.cpp" />
@@ -166,13 +167,22 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Component\Camera.h" />
-    <ClInclude Include="Component\Texture.h" />
+    <ClInclude Include="Component\Mesh.h" />
+    <ClInclude Include="Component\Model.h" />
     <ClInclude Include="Practice_01.h" />
     <ClInclude Include="Shader\Shader.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Assets\awesomeface.png" />
+    <Content Include="Assets\backpack\ao.jpg" />
+    <Content Include="Assets\backpack\backpack.mtl" />
+    <Content Include="Assets\backpack\backpack.obj" />
+    <Content Include="Assets\backpack\diffuse.jpg" />
+    <Content Include="Assets\backpack\normal.png" />
+    <Content Include="Assets\backpack\roughness.jpg" />
+    <Content Include="Assets\backpack\source_attribution.txt" />
+    <Content Include="Assets\backpack\specular.jpg" />
     <Content Include="Assets\container.jpg" />
     <Content Include="Assets\container2.png" />
     <Content Include="Assets\container2_specular.png" />
