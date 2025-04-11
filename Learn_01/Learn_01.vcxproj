@@ -78,8 +78,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);F:\Code\OpenGL\Include</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);F:\Code\OpenGL\Libs</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\Data\Code\OpenGL\Include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);D:\Data\Code\OpenGL\Libs</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -186,8 +186,12 @@
     <Content Include="Assets\container.jpg" />
     <Content Include="Assets\container2.png" />
     <Content Include="Assets\container2_specular.png" />
+    <Content Include="Assets\marble.jpg" />
+    <Content Include="Assets\metal.png" />
     <Content Include="Shader\FShader_01.glsl" />
     <Content Include="Shader\FShader_Light.glsl" />
+    <Content Include="Shader\Sobel_FShader.glsl" />
+    <Content Include="Shader\Sobel_VShader.glsl" />
     <Content Include="Shader\VShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
