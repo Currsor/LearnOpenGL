@@ -183,11 +183,15 @@
     <Content Include="Assets\backpack\roughness.jpg" />
     <Content Include="Assets\backpack\source_attribution.txt" />
     <Content Include="Assets\backpack\specular.jpg" />
+    <Content Include="Assets\blending_transparent_window.png" />
     <Content Include="Assets\container.jpg" />
     <Content Include="Assets\container2.png" />
     <Content Include="Assets\container2_specular.png" />
+    <Content Include="Assets\grass.png" />
     <Content Include="Assets\marble.jpg" />
     <Content Include="Assets\metal.png" />
+    <Content Include="Shader\Frame_FShader.glsl" />
+    <Content Include="Shader\Frame_VShader.glsl" />
     <Content Include="Shader\FShader_01.glsl" />
     <Content Include="Shader\FShader_Light.glsl" />
     <Content Include="Shader\Sobel_FShader.glsl" />
