@@ -44,8 +44,8 @@ int main(int argc, char* argv[])
 
     // 构建和编译着色器
     // -------------------------
-    Shader ourShader("Shader/VShader.glsl", "Shader/FShader_01.glsl");
-    Shader framebufferShader("Shader/Frame_VShader.glsl", "Shader/Frame_FShader.glsl");
+    Shader ourShader("D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Shader/VShader.glsl", "D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Shader/FShader_01.glsl");
+    Shader framebufferShader("D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Shader/Frame_VShader.glsl", "D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Shader/Frame_FShader.glsl");
 
     // cube VAO
     glGenVertexArrays(1, &cubeVAO);
@@ -100,14 +100,28 @@ int main(int argc, char* argv[])
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT , 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    unsigned int colorTexture;
+    glGenTextures(1, &colorTexture);
+    glBindTexture(GL_TEXTURE_2D, colorTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT , 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
+
+    // 颜色附件1 - maskTexture (对象蒙版)
+    unsigned int maskTexture;
+    glGenTextures(1, &maskTexture);
+    glBindTexture(GL_TEXTURE_2D, maskTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, maskTexture, 0);
+
+    // 指定绘制目标
+    unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+    glDrawBuffers(2, attachments);
 
     unsigned int rbo;
     glGenRenderbuffers(1, &rbo);
@@ -122,9 +136,9 @@ int main(int argc, char* argv[])
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
 
-    unsigned int cubeTexture  = loadTexture("Assets/marble.jpg");
-    unsigned int floorTexture = loadTexture("Assets/metal.png");
-    unsigned int transparentTexture = loadTexture("Assets/blending_transparent_window.png");
+    unsigned int cubeTexture  = loadTexture("D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Assets/marble.jpg");
+    unsigned int floorTexture = loadTexture("D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Assets/metal.png");
+    unsigned int transparentTexture = loadTexture("D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Assets/blending_transparent_window.png");
 
     ourShader.use();
     ourShader.setInt("texture1", 0);
@@ -145,7 +159,7 @@ int main(int argc, char* argv[])
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
         
         // 清除颜色缓冲
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
     
@@ -170,6 +184,8 @@ int main(int argc, char* argv[])
         ourShader.setMat4("view", view);
 
         // cubes
+        ourShader.setInt("isTargetObject", 1);
+        
         glBindVertexArray(cubeVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture); 	
@@ -180,6 +196,8 @@ int main(int argc, char* argv[])
         model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
         ourShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+        
+        ourShader.setInt("isTargetObject", 0);
         // floor
         glBindVertexArray(planeVAO);
         glBindTexture(GL_TEXTURE_2D, floorTexture);
@@ -204,16 +222,24 @@ int main(int argc, char* argv[])
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
-        // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
+        // 现在绑定回默认 FrameBuffer 并绘制一个带有附加 FrameBuffer 颜色纹理的四边形平面
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
-        // clear all relevant buffers
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+        glDisable(GL_DEPTH_TEST); // 禁用深度测试，以便不会因深度测试而丢弃屏幕空间四边形。
+        
+        // 清除所有相关缓冲区
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         framebufferShader.use();
+
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, colorTexture);          // 颜色纹理
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, maskTexture);           // 蒙版纹理
+
+        framebufferShader.setVec2("textureSize", glm::vec2(SCR_WIDTH, SCR_HEIGHT));
+
         glBindVertexArray(quadVAO);
-        glBindTexture(GL_TEXTURE_2D, rbo);	// use the color attachment texture as the texture of the quad plane
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
         
