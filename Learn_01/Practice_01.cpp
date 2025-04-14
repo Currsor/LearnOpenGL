@@ -116,6 +116,8 @@ int main(int argc, char* argv[])
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, maskTexture, 0);
 
@@ -184,7 +186,6 @@ int main(int argc, char* argv[])
         ourShader.setMat4("view", view);
 
         // cubes
-        ourShader.setInt("isTargetObject", 1);
         
         glBindVertexArray(cubeVAO);
         glActiveTexture(GL_TEXTURE0);
@@ -192,6 +193,7 @@ int main(int argc, char* argv[])
         model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
         ourShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+        ourShader.setInt("isTargetObject", 1);
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
         ourShader.setMat4("model", model);
@@ -232,10 +234,15 @@ int main(int argc, char* argv[])
 
         framebufferShader.use();
 
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, colorTexture);          // 颜色纹理
+        // 将屏幕纹理绑定到纹理单元 0
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, maskTexture);           // 蒙版纹理
+        glBindTexture(GL_TEXTURE_2D, colorTexture);
+        framebufferShader.setInt("screenTexture", 0);
+
+        // 将蒙版纹理绑定到纹理单元 1
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, maskTexture);
+        framebufferShader.setInt("maskTexture", 1);
 
         framebufferShader.setVec2("textureSize", glm::vec2(SCR_WIDTH, SCR_HEIGHT));
 
