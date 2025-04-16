@@ -44,9 +44,15 @@ int main(int argc, char* argv[])
 
     // 构建和编译着色器
     // -------------------------
-    Shader ourShader("D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Shader/VShader.glsl", "D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Shader/FShader_01.glsl");
-    Shader framebufferShader("D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Shader/Frame_VShader.glsl", "D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Shader/Frame_FShader.glsl");
+    Shader ourShader("Shader/VShader.glsl", "Shader/FShader_01.glsl");
+    Shader ModelShader("Shader/Model_VShader.glsl", "Shader/Model_FShader.glsl");
+    Shader framebufferShader("Shader/Frame_VShader.glsl", "Shader/Frame_FShader.glsl");
 
+    // load models
+    // -----------
+    Model M_model("Assets/Model/Acheron/Acheron.obj");
+    Model M_TaChi("Assets/Model/tachi/tachi.obj");
+    
     // cube VAO
     glGenVertexArrays(1, &cubeVAO);
     glGenBuffers(1, &cubeVBO);
@@ -138,9 +144,9 @@ int main(int argc, char* argv[])
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
 
-    unsigned int cubeTexture  = loadTexture("D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Assets/marble.jpg");
-    unsigned int floorTexture = loadTexture("D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Assets/metal.png");
-    unsigned int transparentTexture = loadTexture("D:/Data/Code/OpenGL/Project/Learn_01/Learn_01/Assets/blending_transparent_window.png");
+    unsigned int cubeTexture  = loadTexture("Assets/marble.jpg");
+    unsigned int floorTexture = loadTexture("Assets/metal.png");
+    unsigned int transparentTexture = loadTexture("Assets/blending_transparent_window.png");
 
     ourShader.use();
     ourShader.setInt("texture1", 0);
@@ -213,16 +219,38 @@ int main(int argc, char* argv[])
             float distance = glm::length(camera.Position - windows[i]);
             sorted[distance] = windows[i];
         }
+
+        // 渲染加载的模型
+        // -----------
+        ModelShader.use();
+
+        ModelShader.setInt("isTargetObject", 1);
+        ModelShader.setMat4("projection", projection);
+        ModelShader.setMat4("view", view);
         
+        model = translate(model, glm::vec3(2.0f, -0.5f, 0.0f));
+        ModelShader.setMat4("model", model);
+        M_model.Draw(ModelShader);
+
+        ModelShader.setInt("isTargetObject", 0);
+        model = translate(model, glm::vec3(1.0f, 1.0f, 0.0f));
+        ModelShader.setMat4("model", model);
+        M_TaChi.Draw(ModelShader);
+
+        
+
+        // 不透明物体最后渲染
+        ourShader.use();
         glBindVertexArray(transparentVAO);
         glBindTexture(GL_TEXTURE_2D, transparentTexture);
         for (std::map<float, glm::vec3>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); ++it)
         {
             model = glm::mat4(1.0f);
-            model = glm::translate(model, it->second);
+            model = translate(model, it->second);
             ourShader.setMat4("model", model);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
+
 
         // 现在绑定回默认 FrameBuffer 并绘制一个带有附加 FrameBuffer 颜色纹理的四边形平面
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -231,7 +259,7 @@ int main(int argc, char* argv[])
         // 清除所有相关缓冲区
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
+        
         framebufferShader.use();
 
         // 将屏幕纹理绑定到纹理单元 0

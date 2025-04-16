@@ -190,12 +190,14 @@
     <Content Include="Assets\grass.png" />
     <Content Include="Assets\marble.jpg" />
     <Content Include="Assets\metal.png" />
+    <Content Include="Assets\Model\tachi\tachi.mtl" />
+    <Content Include="Assets\Model\tachi\tachi.obj" />
+    <Content Include="Assets\Model\tachi\tachi.png" />
     <Content Include="Shader\Frame_FShader.glsl" />
     <Content Include="Shader\Frame_VShader.glsl" />
     <Content Include="Shader\FShader_01.glsl" />
-    <Content Include="Shader\FShader_Light.glsl" />
-    <Content Include="Shader\Sobel_FShader.glsl" />
-    <Content Include="Shader\Sobel_VShader.glsl" />
+    <Content Include="Shader\Model_FShader.glsl" />
+    <Content Include="Shader\Model_VShader.glsl" />
     <Content Include="Shader\VShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

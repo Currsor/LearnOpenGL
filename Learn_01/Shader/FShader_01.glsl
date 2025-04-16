@@ -12,5 +12,4 @@ void main()
 {
     FragColor = texture(texture1, TexCoords);
     MaskValue = (isTargetObject == 1) ? vec4(1.0) : vec4(0.0);
-
 }
