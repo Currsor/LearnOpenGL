@@ -48,11 +48,13 @@ int main(int argc, char* argv[])
     Shader ModelShader("Shader/VS_Model.glsl", "Shader/FS_Model.glsl");
     Shader FrameBufferShader("Shader/VS_Frame.glsl", "Shader/FS_Frame.glsl");
     Shader SkyboxShader("Shader/VS_Skybox.glsl", "Shader/FS_Skybox.glsl");
+    Shader ReflectionShader("Shader/VS_Reflection.glsl", "Shader/FS_Reflection.glsl");
 
     // load models
     // -----------
-    Model M_model("Assets/Model/Acheron/Acheron.obj");
-    Model M_TaChi("Assets/Model/tachi/tachi.obj");
+    Model SM_model("Assets/Model/Acheron/Acheron.obj");
+    Model SM_TaChi("Assets/Model/tachi/tachi.obj");
+    Model SM_Sphere("Assets/Model/sphere/sphere.obj");
 
     // Skybox
     // -----------
@@ -65,7 +67,7 @@ int main(int argc, char* argv[])
         "Assets/skybox/front.jpg",
         "Assets/skybox/back.jpg"
     };
-    unsigned int cubemapTexture = loadCubemap(faces);
+    unsigned int skyboxTexture = loadCubemap(faces);
 
     // skybox VAO
     unsigned int skyboxVAO, skyboxVBO;
@@ -223,7 +225,7 @@ int main(int argc, char* argv[])
         glBindVertexArray(cubeVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture); 	
-        model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
+        model = translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
         BaseShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         BaseShader.setInt("isTargetObject", 1);
@@ -251,18 +253,30 @@ int main(int argc, char* argv[])
         // -----------
         ModelShader.use();
 
-        ModelShader.setInt("isTargetObject", 1);
         ModelShader.setMat4("projection", projection);
         ModelShader.setMat4("view", view);
         
+        ModelShader.setInt("isTargetObject", 1);
         model = translate(model, glm::vec3(2.0f, -0.5f, 0.0f));
         ModelShader.setMat4("model", model);
-        M_model.Draw(ModelShader);
-
+        SM_model.Draw(ModelShader);
         ModelShader.setInt("isTargetObject", 0);
+        
         model = translate(model, glm::vec3(1.0f, 1.0f, 0.0f));
         ModelShader.setMat4("model", model);
-        M_TaChi.Draw(ModelShader);
+        SM_TaChi.Draw(ModelShader);
+
+        
+        ReflectionShader.use();
+        
+        ReflectionShader.setMat4("projection", projection);
+        ReflectionShader.setMat4("view", view);
+        ReflectionShader.setVec3("cameraPos", camera.Position);
+        
+        model = glm::mat4(1.0f);
+        model = translate(model, glm::vec3(0.0f, 2.0f, 0.0f));
+        ReflectionShader.setMat4("model", model);
+        SM_Sphere.Draw(ReflectionShader);
 
         // Draw Skybox
         glDepthFunc(GL_LEQUAL);  // 更改深度函数，以便在值等于深度缓冲区的内容时通过深度测试
@@ -273,7 +287,7 @@ int main(int argc, char* argv[])
         // skybox cube
         glBindVertexArray(skyboxVAO);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
         glDepthFunc(GL_LESS);

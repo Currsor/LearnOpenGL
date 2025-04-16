@@ -263,6 +263,7 @@
     <Content Include="Assets\grass.png" />
     <Content Include="Assets\marble.jpg" />
     <Content Include="Assets\metal.png" />
+    <Content Include="Assets\Model\Sphere\Sphere.obj" />
     <Content Include="Assets\Model\tachi\tachi.mtl" />
     <Content Include="Assets\Model\tachi\tachi.obj" />
     <Content Include="Assets\Model\tachi\tachi.png" />
@@ -273,12 +274,14 @@
     <Content Include="Assets\skybox\right.jpg" />
     <Content Include="Assets\skybox\top.jpg" />
     <Content Include="Shader\FS_Frame.glsl" />
+    <Content Include="Shader\FS_Reflection.glsl" />
     <Content Include="Shader\FS_Skybox.glsl" />
     <Content Include="Shader\VS_Frame.glsl" />
     <Content Include="Shader\FS_Base.glsl" />
     <Content Include="Shader\FS_Model.glsl" />
     <Content Include="Shader\VS_Model.glsl" />
     <Content Include="Shader\VS_Base.glsl" />
+    <Content Include="Shader\VS_Reflection.glsl" />
     <Content Include="Shader\VS_Skybox.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
