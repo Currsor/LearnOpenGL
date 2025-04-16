@@ -105,11 +105,51 @@ float quadVertices[] = { // vertex attributes for a quad that fills the entire s
   1.0f,  1.0f,  1.0f, 1.0f
 };
 
-unsigned int cubeVAO, cubeVBO;
+float skyboxVertices[] = {
+ // positions          
+ -1.0f,  1.0f, -1.0f,
+ -1.0f, -1.0f, -1.0f,
+  1.0f, -1.0f, -1.0f,
+  1.0f, -1.0f, -1.0f,
+  1.0f,  1.0f, -1.0f,
+ -1.0f,  1.0f, -1.0f,
 
-unsigned int planeVAO, planeVBO;
+ -1.0f, -1.0f,  1.0f,
+ -1.0f, -1.0f, -1.0f,
+ -1.0f,  1.0f, -1.0f,
+ -1.0f,  1.0f, -1.0f,
+ -1.0f,  1.0f,  1.0f,
+ -1.0f, -1.0f,  1.0f,
 
-unsigned int fbo;
+  1.0f, -1.0f, -1.0f,
+  1.0f, -1.0f,  1.0f,
+  1.0f,  1.0f,  1.0f,
+  1.0f,  1.0f,  1.0f,
+  1.0f,  1.0f, -1.0f,
+  1.0f, -1.0f, -1.0f,
+
+ -1.0f, -1.0f,  1.0f,
+ -1.0f,  1.0f,  1.0f,
+  1.0f,  1.0f,  1.0f,
+  1.0f,  1.0f,  1.0f,
+  1.0f, -1.0f,  1.0f,
+ -1.0f, -1.0f,  1.0f,
+
+ -1.0f,  1.0f, -1.0f,
+  1.0f,  1.0f, -1.0f,
+  1.0f,  1.0f,  1.0f,
+  1.0f,  1.0f,  1.0f,
+ -1.0f,  1.0f,  1.0f,
+ -1.0f,  1.0f, -1.0f,
+
+ -1.0f, -1.0f, -1.0f,
+ -1.0f, -1.0f,  1.0f,
+  1.0f, -1.0f, -1.0f,
+  1.0f, -1.0f, -1.0f,
+ -1.0f, -1.0f,  1.0f,
+  1.0f, -1.0f,  1.0f
+};
+
 
 inline void framebufferSizeCallback(GLFWwindow* inWindow, int width, int height)  // NOLINT(clang-diagnostic-shadow)
 {
@@ -119,4 +159,6 @@ inline void framebufferSizeCallback(GLFWwindow* inWindow, int width, int height)
 inline void process_input(GLFWwindow *inWindow);
 
 unsigned int loadTexture(char const *path);
+
+unsigned int loadCubemap(vector<std::string> faces);
 

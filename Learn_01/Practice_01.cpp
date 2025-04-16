@@ -44,16 +44,41 @@ int main(int argc, char* argv[])
 
     // 构建和编译着色器
     // -------------------------
-    Shader ourShader("Shader/VShader.glsl", "Shader/FShader_01.glsl");
-    Shader ModelShader("Shader/Model_VShader.glsl", "Shader/Model_FShader.glsl");
-    Shader framebufferShader("Shader/Frame_VShader.glsl", "Shader/Frame_FShader.glsl");
+    Shader BaseShader("Shader/VS_Base.glsl", "Shader/FS_Base.glsl");
+    Shader ModelShader("Shader/VS_Model.glsl", "Shader/FS_Model.glsl");
+    Shader FrameBufferShader("Shader/VS_Frame.glsl", "Shader/FS_Frame.glsl");
+    Shader SkyboxShader("Shader/VS_Skybox.glsl", "Shader/FS_Skybox.glsl");
 
     // load models
     // -----------
     Model M_model("Assets/Model/Acheron/Acheron.obj");
     Model M_TaChi("Assets/Model/tachi/tachi.obj");
+
+    // Skybox
+    // -----------
+    vector<std::string> faces
+    {
+        "Assets/skybox/right.jpg",
+        "Assets/skybox/left.jpg",
+        "Assets/skybox/top.jpg",
+        "Assets/skybox/bottom.jpg",
+        "Assets/skybox/front.jpg",
+        "Assets/skybox/back.jpg"
+    };
+    unsigned int cubemapTexture = loadCubemap(faces);
+
+    // skybox VAO
+    unsigned int skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     
     // cube VAO
+    unsigned int cubeVAO, cubeVBO;
     glGenVertexArrays(1, &cubeVAO);
     glGenBuffers(1, &cubeVBO);
     glBindVertexArray(cubeVAO);
@@ -66,6 +91,7 @@ int main(int argc, char* argv[])
     glBindVertexArray(0);
 
     // plane VAO
+    unsigned int planeVAO, planeVBO;
     glGenVertexArrays(1, &planeVAO);
     glGenBuffers(1, &planeVBO);
     glBindVertexArray(planeVAO);
@@ -103,6 +129,7 @@ int main(int argc, char* argv[])
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
     // framebuffer
+    unsigned int fbo;
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     
@@ -148,8 +175,8 @@ int main(int argc, char* argv[])
     unsigned int floorTexture = loadTexture("Assets/metal.png");
     unsigned int transparentTexture = loadTexture("Assets/blending_transparent_window.png");
 
-    ourShader.use();
-    ourShader.setInt("texture1", 0);
+    BaseShader.use();
+    BaseShader.setInt("texture1", 0);
 
     
     
@@ -179,7 +206,7 @@ int main(int argc, char* argv[])
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        ourShader.use();
+        BaseShader.use();
         
         // 创建转换
         glm::mat4 model         = glm::mat4(1.0f); // 确保首先将矩阵初始化为单位矩阵
@@ -188,8 +215,8 @@ int main(int argc, char* argv[])
         
         view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.Zoom), static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 0.1f, 100.0f);
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        BaseShader.setMat4("projection", projection);
+        BaseShader.setMat4("view", view);
 
         // cubes
         
@@ -197,19 +224,19 @@ int main(int argc, char* argv[])
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, cubeTexture); 	
         model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
-        ourShader.setMat4("model", model);
+        BaseShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-        ourShader.setInt("isTargetObject", 1);
+        BaseShader.setInt("isTargetObject", 1);
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
-        ourShader.setMat4("model", model);
+        model = translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
+        BaseShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
-        ourShader.setInt("isTargetObject", 0);
+        BaseShader.setInt("isTargetObject", 0);
         // floor
         glBindVertexArray(planeVAO);
         glBindTexture(GL_TEXTURE_2D, floorTexture);
-        ourShader.setMat4("model", glm::mat4(1.0f));
+        BaseShader.setMat4("model", glm::mat4(1.0f));
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
         
@@ -237,17 +264,29 @@ int main(int argc, char* argv[])
         ModelShader.setMat4("model", model);
         M_TaChi.Draw(ModelShader);
 
-        
+        // Draw Skybox
+        glDepthFunc(GL_LEQUAL);  // 更改深度函数，以便在值等于深度缓冲区的内容时通过深度测试
+        SkyboxShader.use();
+        glm::mat4 Skybox_view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
+        SkyboxShader.setMat4("view", Skybox_view);
+        SkyboxShader.setMat4("projection", projection);
+        // skybox cube
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS);
 
         // 不透明物体最后渲染
-        ourShader.use();
+        BaseShader.use();
         glBindVertexArray(transparentVAO);
         glBindTexture(GL_TEXTURE_2D, transparentTexture);
         for (std::map<float, glm::vec3>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); ++it)
         {
             model = glm::mat4(1.0f);
             model = translate(model, it->second);
-            ourShader.setMat4("model", model);
+            BaseShader.setMat4("model", model);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
@@ -260,19 +299,19 @@ int main(int argc, char* argv[])
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
-        framebufferShader.use();
+        FrameBufferShader.use();
 
         // 将屏幕纹理绑定到纹理单元 0
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, colorTexture);
-        framebufferShader.setInt("screenTexture", 0);
+        FrameBufferShader.setInt("screenTexture", 0);
 
         // 将蒙版纹理绑定到纹理单元 1
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, maskTexture);
-        framebufferShader.setInt("maskTexture", 1);
+        FrameBufferShader.setInt("maskTexture", 1);
 
-        framebufferShader.setVec2("textureSize", glm::vec2(SCR_WIDTH, SCR_HEIGHT));
+        FrameBufferShader.setVec2("textureSize", glm::vec2(SCR_WIDTH, SCR_HEIGHT));
 
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -331,6 +370,38 @@ unsigned int loadTexture(char const *path)
         std::cout << "Texture failed to load at path: " << path << std::endl;
         stbi_image_free(data);
     }
+
+    return textureID;
+}
+
+unsigned int loadCubemap(vector<std::string> faces)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+            );
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     return textureID;
 }
