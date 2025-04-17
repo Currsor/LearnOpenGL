@@ -48,7 +48,8 @@ int main(int argc, char* argv[])
     Shader ModelShader("Shader/VS_Model.glsl", "Shader/FS_Model.glsl");
     Shader FrameBufferShader("Shader/VS_Frame.glsl", "Shader/FS_Frame.glsl");
     Shader SkyboxShader("Shader/VS_Skybox.glsl", "Shader/FS_Skybox.glsl");
-    Shader ReflectionShader("Shader/VS_Reflection.glsl", "Shader/FS_Reflection.glsl");
+    Shader ReflectionShader("Shader/VS_Reflection_Refraction.glsl", "Shader/FS_Reflection.glsl");
+    Shader RefractionShader("Shader/VS_Reflection_Refraction.glsl", "Shader/FS_Refraction.glsl");
 
     // load models
     // -----------
@@ -277,6 +278,18 @@ int main(int argc, char* argv[])
         model = translate(model, glm::vec3(0.0f, 2.0f, 0.0f));
         ReflectionShader.setMat4("model", model);
         SM_Sphere.Draw(ReflectionShader);
+
+
+        RefractionShader.use();
+
+        RefractionShader.setMat4("projection", projection);
+        RefractionShader.setMat4("view", view);
+        RefractionShader.setVec3("cameraPos", camera.Position);
+        
+        model = glm::mat4(1.0f);
+        model = translate(model, glm::vec3(2.0f, 2.0f, 0.0f));
+        RefractionShader.setMat4("model", model);
+        SM_Sphere.Draw(RefractionShader);
 
         // Draw Skybox
         glDepthFunc(GL_LEQUAL);  // 更改深度函数，以便在值等于深度缓冲区的内容时通过深度测试

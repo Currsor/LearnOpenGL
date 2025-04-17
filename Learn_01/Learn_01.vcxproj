@@ -275,13 +275,14 @@
     <Content Include="Assets\skybox\top.jpg" />
     <Content Include="Shader\FS_Frame.glsl" />
     <Content Include="Shader\FS_Reflection.glsl" />
+    <Content Include="Shader\FS_Refraction.glsl" />
     <Content Include="Shader\FS_Skybox.glsl" />
     <Content Include="Shader\VS_Frame.glsl" />
     <Content Include="Shader\FS_Base.glsl" />
     <Content Include="Shader\FS_Model.glsl" />
     <Content Include="Shader\VS_Model.glsl" />
     <Content Include="Shader\VS_Base.glsl" />
-    <Content Include="Shader\VS_Reflection.glsl" />
+    <Content Include="Shader\VS_Reflection_Refraction.glsl" />
     <Content Include="Shader\VS_Skybox.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
