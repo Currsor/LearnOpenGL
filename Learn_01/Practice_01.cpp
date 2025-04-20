@@ -36,6 +36,30 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+
+    // 启用Docking和多视口功能
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+    // 设置风格
+    ImGui::StyleColorsDark();
+
+    // 设置中文字体（可选）
+    ImFont* font = io.Fonts->AddFontFromFileTTF(
+        "C:/Windows/Fonts/msyh.ttc",  // 微软雅黑字体路径
+        16.0f,
+        nullptr,
+        io.Fonts->GetGlyphRangesChineseFull()
+    );
+    IM_ASSERT(font != nullptr);
+    
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 130");
+
     // 启用Z_Buffer
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -145,7 +169,7 @@ int main(int argc, char* argv[])
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
 
-    // 颜色附件1 - maskTexture (对象蒙版)
+    // maskTexture
     unsigned int maskTexture;
     glGenTextures(1, &maskTexture);
     glBindTexture(GL_TEXTURE_2D, maskTexture);
@@ -172,6 +196,23 @@ int main(int argc, char* argv[])
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+    unsigned int postProcessFBO;
+    glGenFramebuffers(1, &postProcessFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, postProcessFBO);
+
+    unsigned int processedTexture;
+    glGenTextures(1, &processedTexture);
+    glBindTexture(GL_TEXTURE_2D, processedTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, processedTexture, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::POSTPROCESS_FBO:: Framebuffer is not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
 
     unsigned int cubeTexture  = loadTexture("Assets/marble.jpg");
@@ -192,6 +233,8 @@ int main(int argc, char* argv[])
         camera.ProcessKeyboard(window, deltaTime);
         camera.ProcessMouseMovement(window);
         camera.updateFOV(window);
+
+        
 
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
@@ -318,32 +361,51 @@ int main(int argc, char* argv[])
         }
 
 
-        // 现在绑定回默认 FrameBuffer 并绘制一个带有附加 FrameBuffer 颜色纹理的四边形平面
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDisable(GL_DEPTH_TEST); // 禁用深度测试，以便不会因深度测试而丢弃屏幕空间四边形。
-        
-        // 清除所有相关缓冲区
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        
-        FrameBufferShader.use();
+        glBindFramebuffer(GL_FRAMEBUFFER, postProcessFBO);
+        glDisable(GL_DEPTH_TEST);
 
-        // 将屏幕纹理绑定到纹理单元 0
+        // 使用FrameBufferShader处理colorTexture和maskTexture
+        FrameBufferShader.use();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, colorTexture);
         FrameBufferShader.setInt("screenTexture", 0);
-
-        // 将蒙版纹理绑定到纹理单元 1
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, maskTexture);
         FrameBufferShader.setInt("maskTexture", 1);
-
         FrameBufferShader.setVec2("textureSize", glm::vec2(SCR_WIDTH, SCR_HEIGHT));
-
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
+        // 解绑后处理帧缓冲，回到默认帧缓冲
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // 开始ImGui帧
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // 创建DockSpace和所有ImGui窗口
+        CreateDockSpace(processedTexture, &camera); // 内部调用CreateMyWindows
+
+        // 渲染ImGui
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // 处理多视口
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
         
+    
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -432,4 +494,91 @@ unsigned int loadCubemap(vector<std::string> faces)
 
     return textureID;
 }
- 
+
+void CreateDockSpace(unsigned int processedTexture, Camera* camera)
+{
+    // 设置全屏停靠空间
+    static bool opt_fullscreen = true;
+    static bool opt_padding = false;
+    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+    // 设置窗口属性
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+    if (opt_fullscreen)
+    {
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
+        window_flags |= ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    }
+    else
+    {
+        dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
+    }
+
+    // 开始主窗口
+    ImGui::Begin("DockSpace Demo", nullptr, window_flags);
+    if (opt_fullscreen)
+        ImGui::PopStyleVar(2);
+
+    // 提交停靠空间
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+    {
+        ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+    }
+
+    // 添加菜单栏（可选）
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("Options"))
+        {
+            ImGui::MenuItem("Fullscreen", nullptr, &opt_fullscreen);
+            ImGui::MenuItem("Padding", nullptr, &opt_padding);
+            ImGui::Separator();
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+
+    // 在这里添加你的窗口
+    CreateMyWindows(processedTexture, camera);
+
+    ImGui::End();
+}
+
+void CreateMyWindows(unsigned int processedTexture, Camera* camera)
+{
+    // 3D View窗口
+    ImGui::Begin("3D View");
+    {
+        ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+        ImTextureID tex_id = (ImTextureID)(intptr_t)processedTexture;
+        ImGui::Image(tex_id, viewportSize, ImVec2(0, 1), ImVec2(1, 0));
+        
+        // 检测悬停和右键状态
+        bool isHovered = ImGui::IsWindowHovered();
+        bool rightDown = ImGui::IsMouseDown(ImGuiMouseButton_Right);
+        camera->RightClickIn3DView = isHovered && rightDown;
+    }
+    ImGui::End();
+
+    // 其他窗口...
+    ImGui::Begin("Window 1");
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", camera->Position.x, camera->Position.y, camera->Position.z);
+    ImGui::Text("Camera Zoom: %.2f", camera->Zoom);
+    ImGui::End();
+
+    ImGui::Begin("Window 2");
+    ImGui::Text("This is window 2");
+    static float value = 0.5f;
+    ImGui::SliderFloat("Slider", &value, 0.0f, 1.0f);
+    ImGui::End();
+}

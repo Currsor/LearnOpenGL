@@ -29,6 +29,7 @@ public:
     float Zoom;          // 视野范围
     float lastX, lastY;  // 鼠标位置
     bool firstMouse = true;
+    bool RightClickIn3DView; // 右键点击3D视图标志
     
     // 构造函数
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 

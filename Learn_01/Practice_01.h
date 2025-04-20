@@ -11,6 +11,10 @@
 #include "Component/Camera.h"
 #include "Component/Model.h"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 #define NR_POINT_LIGHTS 4
 
 const unsigned int SCR_WIDTH = 1920;
@@ -162,3 +166,6 @@ unsigned int loadTexture(char const *path);
 
 unsigned int loadCubemap(vector<std::string> faces);
 
+void CreateDockSpace(unsigned int processedTexture, Camera* camera);
+
+void CreateMyWindows(unsigned int processedTexture, Camera* camera);

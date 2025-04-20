@@ -4,6 +4,8 @@
 #include <GLFW/glfw3.h>
 #include <glm/gtc/quaternion.hpp>
 
+#include "../imgui/imgui.h"           // ImGui 核心
+
 // 构造函数(向量)
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch, unsigned int WIDTH, unsigned int HEIGHT) 
     : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), 
@@ -12,8 +14,8 @@ Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch, unsigne
     WorldUp = up;
     Yaw = yaw;
     Pitch = pitch;
-    lastX = WIDTH;
-    lastY = HEIGHT;
+    lastX = WIDTH / 2.0f;
+    lastY = HEIGHT / 2.0f;
     updateCameraVectors();
 }
 
@@ -41,49 +43,52 @@ void Camera::ProcessKeyboard(GLFWwindow* inWindow, float deltaTime) {
 }
 
 // 处理鼠标移动
-void Camera::ProcessMouseMovement(GLFWwindow* inWindow)
-{
-    if (glfwGetMouseButton(inWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-    {
+void Camera::ProcessMouseMovement(GLFWwindow* inWindow) {
+    if (RightClickIn3DView) {
+        // 当在3D View窗口内右键按下时，处理鼠标输入
         glfwSetInputMode(inWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        glfwSetCursorPos(inWindow, lastX, lastY);
-        glfwSetCursorPosCallback(inWindow, [](GLFWwindow* window, double xpos, double ypos) {
-            Camera* cam = static_cast<Camera*>(glfwGetWindowUserPointer(window));
-            if (cam->firstMouse) {
-                cam->lastX = xpos;
-                cam->lastY = ypos;
-                cam->firstMouse = false;
-            }
-            float xoffset = xpos - cam->lastX;
-            float yoffset = cam->lastY - ypos;
-            cam->lastX = xpos;
-            cam->lastY = ypos;
-            xoffset *= cam->MouseSensitivity;
-            yoffset *= cam->MouseSensitivity;
 
-            cam->Yaw += xoffset;
-            cam->Pitch += yoffset;
+        double xpos, ypos;
+        glfwGetCursorPos(inWindow, &xpos, &ypos);
 
-            // 限制俯仰角
-            if (cam->Pitch > 89.0f) cam->Pitch = 89.0f;
-            if (cam->Pitch < -89.0f) cam->Pitch = -89.0f;
+        if (firstMouse) {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
+        }
 
-            cam->updateCameraVectors();
-        });
+        float xoffset = static_cast<float>(xpos - lastX);
+        float yoffset = static_cast<float>(lastY - ypos); // Y轴反转
+        lastX = xpos;
+        lastY = ypos;
 
-        ProcessMouseScroll(inWindow);
-    }
-    else
-    {
-        glfwSetCursorPosCallback(inWindow, nullptr);
+        xoffset *= MouseSensitivity;
+        yoffset *= MouseSensitivity;
+
+        Yaw += xoffset;
+        Pitch += yoffset;
+
+        // 限制俯仰角
+        if (Pitch > 89.0f) Pitch = 89.0f;
+        if (Pitch < -89.0f) Pitch = -89.0f;
+
+        updateCameraVectors();
+    } else {
+        // 不在3D View窗口时恢复光标
         glfwSetInputMode(inWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        firstMouse = true;
     }
-    
-    
 }
 
 void Camera::ProcessMouseScroll(GLFWwindow* inWindow)
 {
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.WantCaptureMouse)
+    {
+        // 如果 ImGui 需要捕获鼠标输入，则跳过自定义逻辑
+        return;
+    }
+    
     glfwSetScrollCallback(inWindow, [](GLFWwindow* window, double xpos, double ypos)
     {
         static Camera* cam = static_cast<Camera*>(glfwGetWindowUserPointer(window));
