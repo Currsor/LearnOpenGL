@@ -1,5 +1,7 @@
 #include "Practice_01.h"
 
+#include "imgui/imgui_internal.h"
+
 
 int main(int argc, char* argv[])
 {
@@ -556,6 +558,9 @@ void CreateDockSpace(unsigned int processedTexture, Camera* camera)
 void CreateMyWindows(unsigned int processedTexture, Camera* camera)
 {
     // 3D View窗口
+    ImGuiWindowClass window_class;
+    window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;   // 强制移除 TabBar
+    ImGui::SetNextWindowClass(&window_class);
     ImGui::Begin("3D View");
     {
         ImVec2 viewportSize = ImGui::GetContentRegionAvail();
@@ -569,13 +574,16 @@ void CreateMyWindows(unsigned int processedTexture, Camera* camera)
     }
     ImGui::End();
 
-    // 其他窗口...
+    ImGui::SetNextWindowPos(ImVec2(100,100), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(800,600), ImGuiCond_FirstUseEver);
     ImGui::Begin("Window 1");
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", camera->Position.x, camera->Position.y, camera->Position.z);
     ImGui::Text("Camera Zoom: %.2f", camera->Zoom);
     ImGui::End();
 
+    ImGui::SetNextWindowPos(ImVec2(100,100), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(800,600), ImGuiCond_FirstUseEver);
     ImGui::Begin("Window 2");
     ImGui::Text("This is window 2");
     static float value = 0.5f;
