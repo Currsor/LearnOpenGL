@@ -27,9 +27,6 @@ void ImGuiWrapper::Initialize() {
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     m_MultiViewportEnabled = (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) != 0;
     
-    // 设置默认样式
-    SetClassicTheme();
-    
     // 加载字体
     LoadCustomFont(16);
     
@@ -140,30 +137,10 @@ void ImGuiWrapper::RenderMainWindows(unsigned int processedTexture, Camera* came
         camera->RightClickIn3DView = isHovered && rightDown;
     }
     ImGui::End();
-}
 
-void ImGuiWrapper::SetDarkTheme() {
-    ImGui::StyleColorsDark();
-}
-
-void ImGuiWrapper::SetClassicTheme() {
-    ImGui::StyleColorsClassic();
-}
-
-void ImGuiWrapper::SetCustomTheme(float* colors) {
-    if (colors) {
-        ImGuiStyle& style = ImGui::GetStyle();
-        for (int i = 0; i < ImGuiCol_COUNT; i++) {
-            style.Colors[i] = ImVec4(colors[i*4+0], colors[i*4+1], 
-                                    colors[i*4+2], colors[i*4+3]);
-        }
-    } else {
-        // 默认自定义主题
-        ImGuiStyle& style = ImGui::GetStyle();
-        style.Colors[ImGuiCol_WindowBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
-        style.Colors[ImGuiCol_Header] = ImVec4(0.20f, 0.25f, 0.29f, 0.55f);
-        style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.30f, 0.35f, 0.80f);
-    }
+    ImGui::Begin("Dear ImGui Style Editor");
+    ImGui::ShowStyleEditor();
+    ImGui::End();
 }
 
 void ImGuiWrapper::LoadDefaultFont(float fontSize) {

@@ -13,6 +13,8 @@
 #include "../Component/ImGuiWrapper.h"
 
 #include "../Component/UI/Windows/StatsWindow.h"
+#include "../Component/UI/Windows/StyleEditorWindow.h"
+
 
 #define NR_POINT_LIGHTS 4
 

@@ -24,11 +24,6 @@ public:
     void RenderDockSpace(unsigned int processedTexture, Camera* camera);
     void RenderMainWindows(unsigned int processedTexture, Camera* camera);
     
-    // 样式设置
-    void SetDarkTheme();
-    void SetClassicTheme();
-    void SetCustomTheme(float* colors = nullptr);
-    
     // 字体管理
     void LoadDefaultFont(float fontSize = 16.0f);
     bool LoadCustomFont(float fontSize);

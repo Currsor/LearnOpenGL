@@ -327,6 +327,7 @@
     <ClInclude Include="Component\Shader.h" />
     <ClInclude Include="Component\UI\UIManager.h" />
     <ClInclude Include="Component\UI\Windows\StatsWindow.h" />
+    <ClInclude Include="Component\UI\Windows\StyleEditorWindow.h" />
     <ClInclude Include="Core\Practice_01.h" />
     <ClInclude Include="imgui\imconfig.h" />
     <ClInclude Include="imgui\imgui.h" />

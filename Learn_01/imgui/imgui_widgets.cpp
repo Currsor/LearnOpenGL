@@ -2079,7 +2079,7 @@ static const char* Items_SingleStringGetter(void* data, int idx)
     return *p ? p : NULL;
 }
 
-// Old API, prefer using BeginCombo() nowadays if you can.
+// 旧的 API，如果可以的话，现在更喜欢使用 BeginCombo（）。
 bool ImGui::Combo(const char* label, int* current_item, const char* (*getter)(void* user_data, int idx), void* user_data, int items_count, int popup_max_height_in_items)
 {
     ImGuiContext& g = *GImGui;
@@ -2134,11 +2134,11 @@ bool ImGui::Combo(const char* label, int* current_item, const char* const items[
     return value_changed;
 }
 
-// Combo box helper allowing to pass all items in a single string literal holding multiple zero-terminated items "item1\0item2\0"
+// 组合框助手允许在包含多个以零结尾的项的单个字符串文本 “item1\0item2\0” 中传递所有项
 bool ImGui::Combo(const char* label, int* current_item, const char* items_separated_by_zeros, int height_in_items)
 {
     int items_count = 0;
-    const char* p = items_separated_by_zeros;       // FIXME-OPT: Avoid computing this, or at least only when combo is open
+    const char* p = items_separated_by_zeros;       // FIXME-OPT: 避免计算此 URL，或者至少仅在 combo 时计算 is open
     while (*p)
     {
         p += ImStrlen(p) + 1;

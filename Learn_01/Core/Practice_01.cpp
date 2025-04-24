@@ -192,6 +192,7 @@ int main(int argc, char* argv[])
 
     ImGuiWrapper imguiWrapper(window);
     imguiWrapper.AddWindow<StatsWindow>(&camera);
+    imguiWrapper.AddWindow<StyleEditorWindow>();
     
     // 渲染循环
     while (!glfwWindowShouldClose(window))
